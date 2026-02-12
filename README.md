@@ -6,7 +6,7 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 
 ```
 ┌─────────┐     ┌──────────────────┐     ┌────────────────────┐
-│   PRD   │ ──▶ │ Craftsman Plan   │ ──▶ │ Ralph Loop         │
+│   PRD   │ ──▶ │ Ralph Plan       │ ──▶ │ Ralph Loop         │
 │  Agent  │     │ Mode             │     │ (implementation)   │
 └─────────┘     └──────────────────┘     └────────────────────┘
  Generates       Decomposes PRD into      Iterates through tasks
@@ -16,14 +16,14 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 ### Stage 1: PRD Agent (`prd`)
 Generates a Product Requirements Document from a feature description. Asks clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
 
-### Stage 2: Craftsman Plan Mode (`craftsman-plan`)
+### Stage 2: Ralph Plan Mode (`ralph-plan`)
 Takes a PRD and decomposes it into:
 - **`01.specification.md`** — Technical specification with detailed requirements
 - **`02.plan.md`** — Phased implementation plan with dependency ordering
 - **`03-tasks-*.md`** — Individual task files with acceptance criteria
 - **`PROGRESS.md`** — Progress tracker for the Ralph loop
 
-### Stage 3: Ralph Loop (`craftsman-ralph-loop`)
+### Stage 3: Ralph Loop (`ralph-loop`)
 Iteratively implements each task using subagents:
 - **Coder subagent** — Implements one task at a time, runs preflight checks, commits
 - **Task Inspector** — Verifies each completed task against acceptance criteria
@@ -43,7 +43,7 @@ Copy the `.github/` folder and `AGENTS.md` into your project's root:
 your-project/
 ├── .github/
 │   ├── agents/                      # Custom agents (auto-detected by Copilot)
-│   │   ├── craftsman-plan.agent.md
+│   │   ├── ralph-plan.agent.md
 │   │   ├── prd.agent.md
 │   │   └── ralph.agent.md
 │   ├── copilot-instructions.md      # ← create this (always-on Copilot context)
@@ -127,8 +127,8 @@ Open the Chat view (`Ctrl+Alt+I`) and select an agent from the dropdown:
 | Agent | What it does |
 |-------|-------------|
 | **prd** | Generate a PRD from a feature description |
-| **craftsman-plan** | Decompose a PRD into spec/plan/tasks |
-| **craftsman-ralph-loop** | Execute the implementation loop |
+| **ralph-plan** | Decompose a PRD into spec/plan/tasks |
+| **ralph-loop** | Execute the implementation loop |
 
 Or use prompt commands:
 - `/prd` — Quick PRD generation

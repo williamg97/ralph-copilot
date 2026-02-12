@@ -238,7 +238,7 @@ Use the Ralph-compatible format:
 
 | Date | Task | Action | Agent | Details |
 |------|------|--------|-------|---------|
-| {YYYY-MM-DD} | - | Progress file created | Craftsman Plan Mode | Initial setup |
+| {YYYY-MM-DD} | - | Progress file created | Ralph Plan Mode | Initial setup |
 ```
 
 ---

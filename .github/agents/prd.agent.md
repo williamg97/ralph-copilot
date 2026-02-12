@@ -5,7 +5,7 @@ tools:
   ['search', 'read/readFile', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles']
 handoffs:
   - label: Decompose into Plan
-    agent: craftsman-plan
+    agent: ralph-plan
     prompt: |
       Take the PRD that was just generated and decompose it into a technical specification,
       implementation plan, and phased task files. The PRD folder path will be in the conversation above.
