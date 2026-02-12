@@ -2,7 +2,7 @@
 name: prd
 description: "Generate a Product Requirements Document (PRD) for a new feature. Asks clarifying questions, then produces a structured PRD."
 tools:
-  ['search', 'read/readFile', 'edit/createFile', 'edit/createDirectory', 'edit/editFiles']
+  ['read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
 handoffs:
   - label: Decompose into Plan
     agent: ralph-plan
