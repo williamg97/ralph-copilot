@@ -31,13 +31,15 @@ Verify:
 - Documentation has been updated if required
 - **If re-reviewing a 🔴 Incomplete task**: Verify that all issues mentioned in the previous INSPECTOR FEEDBACK have been addressed
 
-### 3. Reachability audit (for user-facing features)
+### 3. Reachability audit (for consumer-facing features)
 
-If the task involves user-facing features (UI components, pages, routes, API endpoints):
-- Verify the feature is **reachable** through the application's existing navigation, routing, or entry points
-- Check that routes/pages are registered in the application's router
-- Check that navigation links, menu items, or buttons exist that lead to the new feature
-- If the feature is implemented but **not wired into the application** (unreachable by a user), the task is **incomplete**
+If the task involves consumer-facing features (UI components, pages, routes, API endpoints, CLI commands, library exports):
+- Verify the feature is **reachable** through its intended entry point (UI navigation, API route registration, CLI command registry, public exports)
+- For UI: check that routes are registered and navigation links exist
+- For APIs: check that endpoints are mounted on the router and respond to requests
+- For CLIs: check that commands are registered and appear in help output
+- For libraries: check that modules are exported from the public API
+- If the feature is implemented but **not wired into its entry point** (unreachable by a consumer), the task is **incomplete**
 
 ### 4. Verify preflight checks pass
 

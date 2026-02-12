@@ -27,13 +27,27 @@ Review the cumulative changes across all phase commits to verify:
 
 ### 3. Reachability audit
 
-**For every user-facing feature added in this phase**, verify:
+**For every consumer-facing feature added in this phase**, verify it is reachable through its intended entry point. The checks depend on the project type:
+
+**UI/Frontend applications:**
 - Routes/pages are registered in the application's router or routing configuration
 - Navigation links, menu items, or buttons exist that lead to each new feature
 - The feature is accessible starting from the application's main entry point — not just importable as a module or renderable in isolation
-- New API endpoints are documented and reachable from the frontend (if applicable)
 
-**If any feature is implemented but unreachable by a user navigating the application**, mark the relevant task as 🔴 Incomplete with feedback: "Feature X is implemented but not wired into application navigation/routing."
+**API/Backend services:**
+- New endpoints are registered in the server's route configuration and respond to requests
+- If a frontend exists, verify it calls the correct endpoints
+- API documentation or OpenAPI spec is updated (if applicable)
+
+**CLI tools:**
+- New commands/subcommands are registered and appear in help output
+- Commands are callable from the terminal
+
+**Libraries/SDKs:**
+- New modules/functions are exported from the package's public API
+- They are importable by consumers
+
+**If any feature is implemented but unreachable through its intended entry point**, mark the relevant task as 🔴 Incomplete with feedback describing exactly what wiring is missing.
 
 ### 4. Per-task verification
 

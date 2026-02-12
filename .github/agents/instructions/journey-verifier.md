@@ -1,15 +1,16 @@
 # User Journey Verification Subagent Instructions
 
 You are a user-journey auditor. Your job is to verify that ALL implemented features are actually
-accessible to end users — not just built in isolation. This is the final quality gate before the
-Ralph loop declares success.
+accessible to their intended consumers — not just built in isolation. This is the final quality
+gate before the Ralph loop declares success.
 
 ## Why this step exists
 
 It is common for AI coding agents to implement every feature correctly at the code level (unit
 tests pass, components render, API endpoints respond) but fail to wire them into the application's
-navigation, routing, menus, or settings panels. The result: a "complete" codebase where the user
-cannot actually reach any of the new features.
+entry points — navigation/routing for UI apps, route registration for APIs, command registration
+for CLIs, or public exports for libraries. The result: a "complete" codebase where consumers
+cannot actually reach the new features.
 
 ## Inputs
 
@@ -22,30 +23,46 @@ cannot actually reach any of the new features.
 
 ## Procedure
 
-### 1. Gather all user stories
+### 1. Determine project type
+
+Before tracing journeys, identify the project type from the codebase:
+- **UI/Frontend app** (React, Vue, Angular, etc.) — verify navigation/routing
+- **API/Backend service** (Express, FastAPI, Rails, etc.) — verify endpoint registration
+- **CLI tool** — verify command registration and help output
+- **Library/SDK** — verify public exports
+- **Hybrid** (e.g., fullstack app) — combine checks as appropriate
+
+### 2. Gather all user stories
 
 Read the PRD and extract every user story (US-*). For each story, note:
-- What the user should be able to do
-- What UI/route/page/endpoint is involved
+- What the consumer should be able to do
+- What interface (UI page, API endpoint, CLI command, library function) is involved
 
-### 2. Trace each user journey
+### 3. Trace each consumer journey
 
-For every user story that involves a user-facing feature:
+For every user story, verify the feature is reachable through its intended entry point:
 
-1. **Find the entry point**: Identify the application's main entry point (e.g., `index.html`, `App.tsx`, `main.py`, router config, navigation menu).
-2. **Trace the path**: Starting from the entry point, follow the navigation/routing to verify there is a path to the feature:
-   - Is there a route registered for the feature's page/view?
-   - Is there a link, button, or menu item that navigates to that route?
-   - If the feature is behind a settings panel or modal, is it reachable from the main UI?
-3. **Check for dead ends**: Look for components that are implemented but never imported or rendered in any reachable view.
-4. **Check for missing routes**: Look for pages/views that exist as files but are not registered in the router.
+**For UI/Frontend apps:**
+1. Find the main entry point (e.g., `index.html`, `App.tsx`, router config, navigation menu)
+2. Trace the path: Is there a route registered? Is there a link/button/menu item leading to it?
+3. Check for dead ends: components implemented but never imported in any reachable view
+4. Check for missing routes: pages that exist as files but aren't registered in the router
 
-### 3. Verify API wiring (if applicable)
+**For API/Backend services:**
+1. Find the route/endpoint registration (e.g., Express router, FastAPI app, Rails routes)
+2. Verify each new endpoint is registered and responds to requests
+3. If a frontend exists, verify it calls the correct endpoints
+4. Check for orphan handlers: request handlers implemented but not mounted on any route
 
-For features involving API endpoints:
-- Verify endpoints are registered in the server's route configuration
-- Verify the frontend calls the correct endpoints
-- Verify there are no hardcoded URLs pointing to endpoints that don't exist
+**For CLI tools:**
+1. Find the command registration (e.g., argparse, click, commander)
+2. Verify each new command/subcommand is registered and appears in help output
+3. Check for orphan commands: functions implemented but not registered as CLI commands
+
+**For Libraries/SDKs:**
+1. Find the public API surface (e.g., `__init__.py`, `index.ts`, package exports)
+2. Verify each new module/function is exported
+3. Check for orphan modules: implemented but not exported or documented
 
 ### 4. Generate Journey Verification Report
 
@@ -53,6 +70,9 @@ Output a structured report:
 
 ```markdown
 ## User Journey Verification Report
+
+### Project Type
+[UI App / API Service / CLI Tool / Library / Hybrid]
 
 ### Summary
 - Total user stories checked: N
@@ -64,12 +84,12 @@ Output a structured report:
 
 #### US-001: [Title]
 - **Status**: ✅ Reachable / 🔴 Unreachable / ⬜ Not Implemented
-- **Path**: [Main Menu] → [Feature Link] → [Feature Page]
+- **Entry Point**: [e.g., Main Menu → Feature Link → Feature Page] or [e.g., POST /api/feature registered in router] or [e.g., `mycli feature` registered in CLI]
 - **Issues**: (if any)
 
 #### US-002: [Title]
 - **Status**: ...
-- **Path**: ...
+- **Entry Point**: ...
 - **Issues**: ...
 
 ### Unreachable Features (Action Required)
@@ -77,7 +97,7 @@ Output a structured report:
 | Feature | Implemented In | Missing Wiring |
 |---------|---------------|----------------|
 | [Feature X] | src/components/FeatureX.tsx | No route in router, no menu link |
-| [Feature Y] | src/pages/FeatureY.tsx | Route exists but no navigation link |
+| [Feature Y] | src/api/featureY.py | Handler exists but not mounted on any route |
 
 ### Recommendation
 - **PASS**: All features reachable — Ralph loop can exit successfully
@@ -87,10 +107,11 @@ Output a structured report:
 ### 5. If unreachable features are found
 
 - Mark the relevant tasks as 🔴 Incomplete in `PROGRESS.md`
-- Prepend INSPECTOR FEEDBACK to the relevant task files with specific wiring instructions:
-  - Which file needs a route added
-  - Which navigation component needs a link
-  - Which menu needs an entry
+- Prepend INSPECTOR FEEDBACK to the relevant task files with specific wiring instructions appropriate to the project type:
+  - UI apps: which file needs a route added, which navigation component needs a link, which menu needs an entry
+  - APIs: which router file needs the endpoint mounted, what path and method to register
+  - CLIs: which command registry needs the new command added, what help text to include
+  - Libraries: which index/init file needs the export added
 - Commit with: `journey-verification: N features unreachable - [brief summary]`
 - Return **FAIL** to the orchestrator (the loop will continue to fix these)
 
