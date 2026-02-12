@@ -7,11 +7,12 @@ This file provides project-specific context for AI coding agents (Ralph loop, Co
 Run these commands to validate changes before marking a task complete:
 
 ```bash
-# Replace with your project's actual commands:
-# just preflight
-# npm run lint && npm run typecheck && npm run test
-# make checks
-echo "⚠️  No preflight commands configured — update AGENTS.md with your project's checks"
+# ⚠️ REPLACE THESE with your project's actual preflight commands!
+# Examples:
+#   just preflight
+#   npm run lint && npm run typecheck && npm run test
+#   make checks
+echo "❌ No preflight commands configured — update AGENTS.md with your project's checks" && exit 1
 ```
 
 ## Project Context

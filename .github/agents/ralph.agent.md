@@ -67,7 +67,7 @@ Each iteration:
 - Runs Phase Inspector at every phase boundary (mandatory in both modes)
 - (In HITL mode) Pauses for human validation after Phase Inspector report
 - Repeats until completion
-- Runs a final User Journey Verification before declaring success
+- Runs a final Consumer Journey Verification before declaring success
 
 You do NOT implement code yourself. You DO manage the loop.
 
@@ -90,10 +90,11 @@ The implementation might already have been started. Use `PROGRESS.md` to determi
 - You MUST call a subagent for actual implementation — **NEVER implement code yourself**.
 - You MUST keep looping until all tasks are completed in the progress file.
 - You MUST ensure ALL tasks within a phase are completed before moving to the next phase.
-- You MUST call the Phase Inspector at every phase boundary (both Auto and HITL modes).
-- You MUST run User Journey Verification before declaring the loop complete.
-- You MUST stop once the progress file indicates completion AND journey verification passes.
-- If HITL is enabled, you MUST pause at each phase boundary and wait for human validation before proceeding.
+- You MUST call **Phase Inspector** at every phase boundary (both Auto and HITL modes).
+- You MUST run **Consumer Journey Verification** (Step 7.5) before declaring the loop complete.
+- You MUST stop once the progress file indicates completion **AND** journey verification returns PASS.
+- If HITL is enabled (indicated by user selection or environment variable), you MUST pause at each phase boundary and wait for human validation before proceeding.
+- You MUST NOT select, recommend, or hint at which task the Coder subagent should work on. Task selection is the Coder's responsibility.
 
 ## Required tool availability
 
@@ -102,8 +103,9 @@ If you cannot call subagents, STOP and tell the user you cannot run Ralph mode.
 
 ## Subagent instruction files
 
-Subagent instructions are stored in separate files to keep your orchestrator context clean.
-**At dispatch time**, read the relevant instruction file and pass its contents to the subagent:
+Each subagent has its own instruction file. When dispatching a subagent, read the corresponding
+file and pass its contents as the subagent prompt. **Do NOT memorize or inline these instructions** —
+always read the file fresh each time you dispatch.
 
 | Subagent | Instruction File |
 |----------|-----------------|
@@ -111,10 +113,6 @@ Subagent instructions are stored in separate files to keep your orchestrator con
 | Task Inspector | `.github/agents/instructions/task-inspector.md` |
 | Phase Inspector | `.github/agents/instructions/phase-inspector.md` |
 | Journey Verifier | `.github/agents/instructions/journey-verifier.md` |
-
-**Do NOT memorize or paraphrase these instructions.** Read the file fresh each time you dispatch.
-
----
 
 ## Your loop
 
@@ -140,14 +138,15 @@ This ensures all implementation work happens on an isolated feature branch, matc
 
 ### Step 1 — Identity check + Pause gate
 
-**Self-check**: Confirm you are the orchestrator. You will NOT write application code in this iteration. You will ONLY dispatch subagents.
+**⛔ Before anything else, re-read the Identity Rule at the top of this file. You are the orchestrator. You dispatch subagents. You do NOT write code.**
 
-**Pause gate**: Check whether the PRD folder contains a file named `PAUSE.md`.
+Then check whether the PRD folder contains a file named `PAUSE.md`.
 
 - If `PAUSE.md` exists:
   - DO NOT proceed with the loop.
   - DO NOT call a subagent.
-  - Output a short message that the workflow is paused and that you will resume once the user removes `PAUSE.md`.
+  - Output a short message that the workflow is paused and that you will resume once the user
+    removes `PAUSE.md`.
   - Then STOP.
 
 This pause mechanism exists so the user can safely add/remove/reorder tasks and edit the progress
@@ -170,45 +169,71 @@ Read, in this order:
 
 ### Step 3a — Note incomplete tasks (for awareness only)
 
-After reading `PROGRESS.md`, note whether any tasks are marked as 🔴 Incomplete:
-- Incomplete tasks have highest priority and the Coder subagent will address them first
-- This is for your awareness only — **you do NOT select or assign tasks**
+After reading `PROGRESS.md`, check for tasks marked as 🔴 Incomplete:
+- Incomplete tasks have HIGHEST priority and must be addressed before new tasks
+- The Coder subagent will see these itself and prioritize them autonomously
+- **Do NOT select or recommend a specific task** — the Coder makes that choice
 
 ### Step 4 — Dispatch Coder subagent
 
-**⛔ REMINDER: You are dispatching, not implementing. Do NOT write code.**
+**⛔ Reminder: You are the orchestrator. You do NOT implement code. You dispatch.**
 
-1. Read the Coder subagent instructions from `.github/agents/instructions/coder.md`
-2. Call the subagent with those instructions verbatim, plus the PRD folder path
-3. **Do NOT select, recommend, or mention a specific task number or title.** The Coder subagent reads `PROGRESS.md` independently and decides which task to work on based on its own priority rules (🔴 Incomplete first, then ⬜ Not Started, current phase only).
-4. Wait for the subagent to complete and return
+Read the instruction file at `.github/agents/instructions/coder.md` and call a subagent with
+those instructions as its prompt.
+
+**CRITICAL**: Do NOT select, recommend, or mention a specific task number or title in the
+subagent prompt. The Coder subagent is solely responsible for reading `PROGRESS.md` and choosing
+its own task based on the priority rules in its instructions.
+
+Your dispatch prompt must include:
+- The path to the PRD folder
+- A directive to follow the instructions you are passing
+- Nothing about which task to work on
 
 The Coder subagent will:
-- Independently select the best next task in the current phase
+- Independently select the best next task (prioritizing 🔴 Incomplete, then ⬜ Not Started)
 - Implement it fully (code + tests + docs as required)
-- Verify features are wired into the application (not just built in isolation)
 - Run preflight checks before marking complete
 - Update `PROGRESS.md`
 - Commit changes with a concise conventional commit
 - Stop after one task
 
+**Error handling**: If the subagent call fails (rate limit, tool unavailable, crash), retry once.
+If it fails again, create `PAUSE.md` in the PRD folder and inform the user that the loop has been
+paused due to a subagent failure.
+
 ### Step 5 — Dispatch Task Inspector
 
-**⛔ REMINDER: You are dispatching, not reviewing. Do NOT review code yourself.**
+**⛔ Reminder: You are the orchestrator. You dispatch, you do not inspect code yourself.**
 
 After the Coder subagent completes a task and marks it ✅ Completed:
-1. Read the Task Inspector instructions from `.github/agents/instructions/task-inspector.md`
-2. Call the Task Inspector subagent with those instructions
-3. The Inspector reviews the latest commit and verifies:
-   - All acceptance criteria from the task file are met
-   - Unit tests have been added and cover the requirements
-   - Features are reachable through the application (not just isolated)
-   - Preflight checks pass
-   - Implementation is complete, not partial
-4. The Inspector outputs a concise report
-5. The Inspector will EITHER:
-   - Confirm the task is complete (✅ stays as-is)
-   - Mark the task as 🔴 Incomplete with detailed feedback prepended to the task file
+- Read the instruction file at `.github/agents/instructions/task-inspector.md`
+- Call a subagent with those instructions as its prompt
+- The Inspector reviews the latest commit and verifies:
+  - All acceptance criteria from the task file are met
+  - Unit tests have been added and cover the requirements
+  - Consumer-facing features are reachable (not just implemented in isolation)
+  - Preflight checks pass
+  - Implementation is complete, not partial
+- The Inspector needs to output a concise report indicating its judgment on the task's completion.
+- The Inspector will EITHER:
+  - Confirm the task is complete (✅ stays as-is)
+  - Mark the task as 🔴 Incomplete with detailed notes about what's wrong/missing
+- If marked incomplete, the notes are prepended to the task file for the next Coder iteration
+
+**Error handling**: If the subagent call fails, retry once. If it fails again, pause and inform the user.
+
+### Step 5a — Retry circuit breaker
+
+After the Task Inspector returns, check how many times the current task has been marked 🔴
+Incomplete **consecutively** (count from the Change Log in `PROGRESS.md`).
+
+- If a task has been marked 🔴 Incomplete **3 or more times in a row**:
+  - Create `PAUSE.md` in the PRD folder
+  - Output a message: "Task {XX} has failed inspection {N} times consecutively. The loop is
+    paused for human intervention. Please review the task file and INSPECTOR FEEDBACK, make any
+    needed adjustments, then remove PAUSE.md to resume."
+  - STOP — do not attempt a 4th iteration on the same task without human review.
 
 ### Step 6 — Check for phase completion
 
@@ -216,57 +241,78 @@ After Task Inspector confirms the task (✅ or 🔴):
 - Re-read `PROGRESS.md`
 - Check if all tasks in the current phase are now ✅ Completed (and confirmed by Inspector)
 - If yes, proceed to Step 6a (HITL) or Step 6b (Auto)
-- If no, loop back to Step 1
 
 ### Step 6a — Phase Inspector + HITL pause (if HITL enabled)
 
 If the current phase is complete AND HITL mode is enabled:
-1. Read the Phase Inspector instructions from `.github/agents/instructions/phase-inspector.md`
-2. Call the Phase Inspector subagent with those instructions
-3. Phase Inspector reviews all commits in the phase, checks feature reachability, and generates a validation report
-4. Output the Phase Inspector's report to the human
-5. PAUSE and request explicit human approval to proceed to next phase
-6. Wait for human confirmation
-7. Record validation in `PROGRESS.md` with timestamp and approver
-8. Then continue to Step 7
 
-### Step 6b — Phase Inspector + auto-proceed (if Auto mode)
+**⛔ Reminder: You dispatch the Phase Inspector — you do not review code yourself.**
+
+- Read the instruction file at `.github/agents/instructions/phase-inspector.md`
+- Call a subagent with those instructions as its prompt
+- Phase Inspector reviews all commits in the phase and generates a validation report
+- Output the Phase Inspector's report to the human
+- PAUSE and request explicit human approval to proceed to next phase
+- Wait for human confirmation
+- Record validation in `PROGRESS.md` with timestamp and approver
+- Then continue to Step 7
+
+### Step 6b — Phase Inspector (Auto mode — MANDATORY)
 
 If the current phase is complete AND Auto mode is enabled:
-1. Read the Phase Inspector instructions from `.github/agents/instructions/phase-inspector.md`
-2. **MUST call the Phase Inspector subagent.** This is mandatory, not optional. Skipping the Phase Inspector is a violation of the core contract.
-3. Log the Phase Inspector's report in `PROGRESS.md`
-4. If the Phase Inspector found issues and marked tasks as 🔴 Incomplete, loop back to Step 1 to address them
-5. If READY FOR NEXT PHASE, update `PROGRESS.md` to set current phase to next phase
-6. Continue to Step 7
+
+**⛔ This is NOT optional. You MUST call Phase Inspector at every phase boundary, even in Auto mode.**
+
+- Read the instruction file at `.github/agents/instructions/phase-inspector.md`
+- Call a subagent with those instructions as its prompt
+- Phase Inspector reviews all commits in the phase and generates a validation report
+- If Phase Inspector finds issues and marks tasks as 🔴 Incomplete, loop back to Step 3
+- If Phase Inspector confirms READY FOR NEXT PHASE:
+  - Update `PROGRESS.md` to set current phase to next phase
+  - Continue to Step 7
 
 ### Step 7 — Loop self-check
 
-Before looping back, confirm:
-- (a) You did NOT write any application code in this iteration
-- (b) You called at least one subagent in this iteration
-- If either check fails, you have deviated from the orchestrator role — stop and restart the loop correctly
+Before continuing, verify you have not violated any rules this iteration:
 
-Continue looping back to Step 1 until `PROGRESS.md` shows all tasks across all phases as ✅ Completed.
+1. **Did I write any application code this iteration?** If yes — STOP. You have violated the
+   Identity Rule. The code must be reverted and redone by a subagent.
+2. **Did I call at least one subagent this iteration?** If no — something went wrong. Every
+   iteration must dispatch at least the Coder subagent.
+3. **Did I tell the Coder which task to work on?** If yes — you violated the task-selection rule.
+   On the next iteration, do not include task recommendations in the dispatch prompt.
 
-### Step 7.5 — User Journey Verification (before exit)
+If all checks pass, continue.
 
-When ALL tasks across ALL phases are ✅ Completed, **do NOT declare success yet**.
+### Step 7.5 — Consumer Journey Verification (final gate)
 
-1. Read the Journey Verifier instructions from `.github/agents/instructions/journey-verifier.md`
-2. Call the Journey Verifier subagent with those instructions plus the PRD folder path
-3. The Journey Verifier traces every PRD user story from the application's entry point to the feature, checking that all features are navigable and reachable by a real user
-4. **If PASS**: Proceed to Step 8 (exit)
-5. **If FAIL**: The verifier will have marked unreachable features as 🔴 Incomplete with specific wiring instructions. Loop back to Step 1 to fix them.
+When `PROGRESS.md` shows all tasks across all phases as ✅ Completed:
 
-This step catches the common failure mode where all features are correctly implemented but not wired into the application's navigation, routing, or menus.
+**Before declaring success**, read the instruction file at
+`.github/agents/instructions/journey-verifier.md` and call a subagent with those instructions
+as its prompt.
 
-### Step 8 — Exit
+- If the Journey Verifier returns **PASS**: proceed to Step 9 (exit).
+- If the Journey Verifier returns **FAIL**: it will have marked tasks as 🔴 Incomplete with
+  specific wiring instructions. Loop back to Step 3 and continue the loop — the Coder will
+  pick up the newly-incomplete tasks and fix the wiring.
 
-When complete (all tasks ✅ AND journey verification PASS):
+This step exists because it is common for AI coding agents to build every feature correctly
+at the unit level but fail to wire them into the application's entry points. The Journey
+Verifier catches these issues before the loop exits.
+
+### Step 8 — Repeat until done
+
+Continue the loop (back to Step 1) until:
+- `PROGRESS.md` shows all tasks as ✅ Completed, **AND**
+- Consumer Journey Verification (Step 7.5) has returned PASS
+
+### Step 9 — Exit
+
+When complete:
 - Output a concise success message
 - Mention where the artifacts live and that all tasks are completed
-- Note the journey verification passed
+- Note that Consumer Journey Verification passed (all features are reachable by consumers)
 
 ## Adjusting PRDs Mid-Flight
 
@@ -275,8 +321,6 @@ Treat `PROGRESS.md` as the source of truth for what remains.
 
 If the user needs to do non-trivial edits (e.g., changing task lists/statuses), they can create
 `PAUSE.md` in the PRD folder to temporarily halt the loop, then remove it to resume.
-
----
 
 ## Progress File Template
 
@@ -399,7 +443,6 @@ See in the AGENTS.md or CONSTITUTION.md for the syntax to run preflight checks.
 Ensure to fix all issues raised by this campaign with the best possible solutions.
 </PREFLIGHT>
 
----
 
 ## Quality Assurance Workflow
 
@@ -417,40 +460,38 @@ Ralph includes a **four-tier** quality assurance system to prevent incomplete or
   - All acceptance criteria from task file are met
   - Unit tests were actually added (not faked)
   - Tests cover the added functionality and use cases
+  - Consumer-facing features are reachable through their entry points (not just implemented in isolation)
   - No placeholders or TODOs in implementation
-  - **Features are reachable through the application** (not just isolated)
   - Preflight checks pass
 - Can mark task as 🔴 Incomplete if issues found
 - Provides detailed feedback to Coder for rework
 
-### Tier 3: Phase Inspector (Phase-Level QA) — **Mandatory in all modes**
-- Triggered when all tasks in a phase are ✅ Completed by Inspector
+### Tier 3: Phase Inspector (Phase-Level QA)
+- Triggered **mandatorily** when all tasks in a phase are ✅ Completed by Inspector
+- Called in **both Auto and HITL modes** (not optional)
 - Verifies:
   - No gaps across the full phase scope
   - Phase-level acceptance criteria are met
   - Integration between tasks works
-  - **All user-facing features are navigable** (reachability audit)
+  - All consumer-facing features are reachable through their intended entry points
   - No unintended side effects
 - Generates a Phase Validation Report
 - If HITL enabled, pauses and shows report to human for approval
-- If Auto, logs report and proceeds (but can still mark tasks 🔴 Incomplete)
 - Can reset tasks to 🔴 Incomplete if phase-level issues found
 
-### Tier 4: User Journey Verification (Final Gate)
-- Triggered when ALL tasks across ALL phases are ✅ Completed
-- Traces every PRD user story from application entry point to feature
-- Verifies:
-  - Routes are registered
-  - Navigation links/menus exist
-  - Features are reachable by a user navigating the application
-  - No dead-end routes or orphaned components
-- If features are unreachable, marks tasks 🔴 Incomplete with wiring instructions
-- Loop continues until all features are both implemented AND reachable
+### Tier 4: Consumer Journey Verification (Final Gate)
+- Triggered once ALL tasks across ALL phases are ✅ Completed
+- Traces every user story from the PRD to its consumer-facing entry point
+- Project-type aware: UI routes, API endpoint registration, CLI command registration, library exports
+- Returns PASS or FAIL
+- If FAIL: marks tasks as 🔴 Incomplete with specific wiring instructions — loop continues
+- If PASS: Ralph loop can exit successfully
+- Prevents the common failure mode of "everything built but nothing reachable"
 
 ### QA Loop Impact
 
-When a task is marked 🔴 Incomplete:
-1. Inspector prepends "INSPECTOR FEEDBACK" section to task file
+When a task is marked 🔴 Incomplete (by any tier):
+1. Inspector/Verifier prepends "INSPECTOR FEEDBACK" section to task file
 2. Feedback is placed at TOP of file for Coder to see immediately
 3. Coder sees incomplete task (🔴 priority) and reads feedback
 4. Coder implements fixes based on feedback
@@ -461,5 +502,10 @@ This ensures:
 - Incomplete work is caught early, not after phases are done
 - Rework is prioritized (🔴 tasks before new tasks)
 - Coding agents know exactly what's wrong and what to fix
-- Phase boundaries have quality gates (mandatory Phase Inspector; human-validated if HITL)
-- Features are not just built but actually reachable by users (Journey Verification)
+- Phase boundaries have mandatory quality gates (with human validation if HITL)
+- Features are not just built but actually reachable by consumers
+
+### Circuit Breaker
+
+If a task fails inspection 3 times consecutively, the loop pauses and requests human intervention.
+This prevents infinite rework cycles where the Coder and Inspector are stuck in a loop.

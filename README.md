@@ -7,12 +7,12 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 ## Pipeline
 
 ```
-┌─────────┐     ┌──────────────────┐     ┌────────────────────┐
-│   PRD   │ ──▶ │ Ralph Plan       │ ──▶ │ Ralph Loop         │
-│  Agent  │     │ Mode             │     │ (implementation)   │
-└─────────┘     └──────────────────┘     └────────────────────┘
- Generates       Decomposes PRD into      Iterates through tasks
- requirements    spec + plan + tasks      with Coder/Inspector QA
+┌─────────┐     ┌──────────────────┐     ┌─────────────────────────────────┐
+│   PRD   │ ──▶ │ Ralph Plan       │ ──▶ │ Ralph Loop                      │
+│  Agent  │     │ Mode             │     │ (orchestration + implementation) │
+└─────────┘     └──────────────────┘     └─────────────────────────────────┘
+ Generates       Decomposes PRD into      Iterates through tasks with
+ requirements    spec + plan + tasks      Coder / Inspector / Journey QA
 ```
 
 ### Stage 1: PRD Agent (`prd`)
@@ -27,9 +27,12 @@ Takes a PRD and decomposes it into:
 
 ### Stage 3: Ralph Loop (`ralph-loop`)
 Iteratively implements each task using subagents:
-- **Coder subagent** — Implements one task at a time, runs preflight checks, commits
-- **Task Inspector** — Verifies each completed task against acceptance criteria
-- **Phase Inspector** — Validates entire phases at phase boundaries
+- **Coder subagent** — Autonomously selects and implements one task at a time, runs preflight checks, verifies feature wiring, commits
+- **Task Inspector** — Verifies each completed task against acceptance criteria and reachability
+- **Phase Inspector** — Validates entire phases at phase boundaries including cross-task integration and reachability audits
+- **Journey Verifier** — Final gate that traces every user story from the PRD to a reachable entry point before the loop exits
+
+The orchestrator never writes application code — it only dispatches subagents and tracks progress via `PROGRESS.md`.
 
 Supports two modes:
 - **Auto** — Runs through all tasks autonomously
@@ -45,10 +48,15 @@ Copy the `.github/` folder and `AGENTS.md` into your project's root:
 your-project/
 ├── .github/
 │   ├── agents/                      # Custom agents (auto-detected by Copilot)
-│   │   ├── ralph-plan.agent.md
 │   │   ├── prd.agent.md
-│   │   └── ralph.agent.md
-│   ├── copilot-instructions.md      # ← create this (always-on Copilot context)
+│   │   ├── ralph-plan.agent.md
+│   │   ├── ralph.agent.md
+│   │   └── instructions/            # Extracted subagent instruction files
+│   │       ├── coder.md
+│   │       ├── task-inspector.md
+│   │       ├── phase-inspector.md
+│   │       └── journey-verifier.md
+│   ├── copilot-instructions.md      # ← customize this (always-on Copilot context)
 │   ├── prompts/                     # Slash commands (/prd, /plan)
 │   │   ├── plan.prompt.md
 │   │   └── prd.prompt.md
@@ -163,18 +171,31 @@ tasks/
 - **Pause**: Create a `PAUSE.md` file in the feature folder to halt Ralph mid-loop. Remove it to resume.
 - **HITL mode**: Use the "Human-in-the-Loop Ralph Loop" handoff to get phase validation pauses.
 - **Edit mid-flight**: Pause the loop, edit task files or PROGRESS.md, then remove PAUSE.md to resume.
+- **Feature branches**: Ralph automatically creates and checks out a `feature/{name}` branch derived from the plan. The branch name is stored in `PROGRESS.md` and verified at the start of every iteration.
 
 ## Quality Assurance
 
-Ralph includes a three-tier QA system:
+Ralph includes a four-tier QA system:
 
 | Tier | Agent | When | Scope |
 |------|-------|------|-------|
-| 1 | Coder | Before marking any task complete | Preflight: types, lint, tests, build |
-| 2 | Task Inspector | After each task completion | Per-task: acceptance criteria, test coverage |
-| 3 | Phase Inspector | After all tasks in a phase complete | Phase-level: integration, gaps, side effects |
+| 1 | Coder | Before marking any task complete | Preflight checks + wiring verification for consumer-facing features |
+| 2 | Task Inspector | After each task completion | Acceptance criteria, test coverage, reachability audit |
+| 3 | Phase Inspector | After all tasks in a phase complete | Cross-task integration, phase-level reachability, gaps, side effects |
+| 4 | Journey Verifier | After all phases complete | Traces every PRD user story to a reachable entry point |
 
 When a task fails inspection, it's marked 🔴 Incomplete with structured feedback prepended to the task file. The coder picks it up as highest priority in the next iteration.
+
+### Reachability Audits
+
+A recurring theme across tiers 1–4 is **reachability verification** — ensuring features aren't just implemented but are actually accessible to consumers:
+
+- **UI apps**: Routes registered, navigation links present, pages reachable from main entry point
+- **APIs**: Endpoints mounted on the router and responding to requests
+- **CLI tools**: Commands registered and appearing in help output
+- **Libraries**: Modules exported from the public API
+
+This prevents the common AI-agent failure mode where every unit test passes but users can't actually reach the new features.
 
 ## Requirements
 

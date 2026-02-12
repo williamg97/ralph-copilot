@@ -1,5 +1,5 @@
 ---
-name: plan-decomposition
+name: plan
 description: "Decompose a Product Requirements Document into technical specification, implementation plan, and phased task files. Use when breaking down a PRD, planning implementation phases, or creating task files for execution. Triggers on: decompose prd, plan implementation, break down feature, create tasks from prd, plan mode."
 ---
 
@@ -98,20 +98,20 @@ How this feature fits into the existing system.
 
 ## Phase Breakdown
 
-### Phase 1: {Name} (e.g., "Data Layer")
+### Phase 1: {Name} (e.g., "Core Workflow")
 **Goal**: What this phase delivers.
 **Tasks**:
 1. Task 01 — {title} (SR-001) [Low]
 2. Task 02 — {title} (SR-002) [Medium]
 **Phase Exit Criteria**:
-- [ ] Criterion for phase completion
+- [ ] Core workflow functional and reachable through its entry point
 
-### Phase 2: {Name} (e.g., "Core Logic")
+### Phase 2: {Name} (e.g., "Advanced Features")
 **Goal**: ...
 **Tasks**:
 3. Task 03 — {title} (SR-003) [Medium]
 **Phase Exit Criteria**:
-- [ ] Criterion
+- [ ] New features functional and tested
 
 ## Dependency Graph
 Which tasks depend on which others.
@@ -178,7 +178,7 @@ to handle, gotchas, or relevant documentation links.
 3. **Self-contained context**: Include enough detail that the coder doesn't need to read the full spec to start
 4. **Always require tests**: Include "Unit tests added" and "Preflight passes" as criteria
 5. **File-explicit**: List exact files to create/modify — this dramatically improves coder accuracy
-6. **UI tasks**: Always include "Verify visually in browser" as a criterion for front-end changes
+6. **Verification criteria**: For UI changes, include "Verify visually in browser." For API changes, include "Endpoint responds correctly." For CLI changes, include "Command produces expected output." For library changes, include "Module is importable and documented."
 7. **No orphans**: Every task must trace back to at least one specification requirement (SR-*)
 8. **Wiring required**: Any task that adds consumer-facing features MUST include an acceptance criterion verifying the feature is reachable through its intended entry point. For UI apps: "Feature is reachable by a user through the application's existing navigation/routing." For APIs: "Endpoint is registered and responds to requests." For CLIs: "Command is registered and documented in help output." For libraries: "Module is exported and importable." Do not accept "component renders in isolation" or "unit tests pass" as sole proof of completion.
 

@@ -130,25 +130,25 @@ How the feature fits into the existing system. Include a brief description of th
 
 ## Phase Breakdown
 
-### Phase 1: {Phase Name} (e.g., "Foundation / Data Layer")
-**Goal**: What this phase delivers as a usable increment.
+### Phase 1: {Phase Name} (e.g., "Core Workflow End-to-End")
+**Goal**: What this phase delivers as a usable, testable increment.
 **Tasks**:
 1. Task 01 — {title} (SR-001) [Complexity: Low]
 2. Task 02 — {title} (SR-002) [Complexity: Medium]
 **Phase Exit Criteria**:
-- [ ] All data layer changes are complete and tested
-- [ ] Migrations run successfully
+- [ ] Core workflow is functional and reachable through its entry point
+- [ ] Tests pass for all new functionality
 
-### Phase 2: {Phase Name} (e.g., "Core Logic / API")
+### Phase 2: {Phase Name} (e.g., "Advanced Features")
 **Goal**: ...
 **Tasks**:
 3. Task 03 — {title} (SR-003) [Complexity: Medium]
 4. Task 04 — {title} (SR-004) [Complexity: High]
 **Phase Exit Criteria**:
-- [ ] API endpoints functional and tested
+- [ ] New features functional and tested
 - [ ] Integration with Phase 1 verified
 
-### Phase 3: {Phase Name} (e.g., "UI / Integration")
+### Phase 3: {Phase Name} (e.g., "Polish & Hardening")
 ...
 
 ## Dependency Graph
@@ -162,10 +162,10 @@ Describe or list task dependencies so the executor knows what order is safe.
 **Branch naming:** Derive the branch name from the feature name in kebab-case, prefixed with `feature/`. For example, a "User Notification System" PRD becomes `feature/user-notification-system`. This branch name must be consistent across `02.plan.md` and `PROGRESS.md`.
 
 **Phase design principles:**
-- Each phase should be a **usable increment** — something that could be demonstrated or tested independently
-- Order phases from foundational (data, config) → core logic → integration → UI/polish
+- **Vertical slices over horizontal layers**: Each phase should deliver a usable, testable increment — not just one layer. Avoid deferring all wiring/integration to the last phase. For backend/library projects, each phase should deliver a working endpoint, command, or importable module.
 - Keep phases to 2-5 tasks each. More than 5 tasks per phase means the phase is too large — split it
 - Total tasks for a typical feature: 4-12. Larger features: up to 20
+- Any phase that introduces consumer-facing features must include a task that wires them into the appropriate entry point (UI routes, API registration, CLI commands, library exports)
 
 ### Step 4 — Generate task files
 
@@ -212,7 +212,12 @@ gotchas to watch out for. Keep this practical — the coder agent will read this
 - Tasks must have clear, verifiable acceptance criteria — no vague "works correctly"
 - Always include a criterion for tests and preflight passing
 - List specific files to modify so the coder doesn't have to hunt
-- If a task touches UI, include "Verify visually in browser" as a criterion
+- Include project-type-appropriate verification criteria:
+  - **UI tasks**: "Verify visually in browser"
+  - **API tasks**: "Endpoint responds correctly to requests"
+  - **CLI tasks**: "Command produces expected output"
+  - **Library tasks**: "Module is importable and documented"
+- Any task adding consumer-facing features must include an acceptance criterion verifying the feature is reachable through its entry point — not just implemented in isolation
 
 ### Step 5 — Generate `PROGRESS.md`
 

@@ -23,7 +23,7 @@ Review the cumulative changes across all phase commits to verify:
 - Phase-level acceptance criteria are met
 - Integration between tasks works correctly
 - No unintended side effects or broken dependencies
-- Preflight checks pass for the entire phase
+- Preflight checks pass for the entire phase (individual tasks were already checked by Task Inspector, but re-run to catch cross-task regressions)
 
 ### 3. Reachability audit
 

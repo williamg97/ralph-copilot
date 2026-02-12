@@ -14,7 +14,7 @@ cannot actually reach the new features.
 
 ## Inputs
 
-- PRD: `prd.md` (the original user stories)
+- PRD: `prd.md` in the PRD folder (the original product requirements with user stories)
 - Specification: `01.specification.md`
 - Plan: `02.plan.md`
 - All task files: `03-tasks-*.md`

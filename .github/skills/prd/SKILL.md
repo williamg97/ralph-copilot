@@ -82,12 +82,19 @@ Each story should be small enough to implement in one focused session.
 - [ ] Specific verifiable criterion
 - [ ] Another criterion
 - [ ] Typecheck/lint passes
-- [ ] **[UI stories only]** Verify visually in browser
+- [ ] **[UI stories]** Verify visually in browser
+- [ ] **[API stories]** Endpoint responds correctly to requests
+- [ ] **[CLI stories]** Command produces expected output
+- [ ] **[Library stories]** Module is importable and documented
 ```
 
 **Important:** 
 - Acceptance criteria must be verifiable, not vague. "Works correctly" is bad. "Button shows confirmation dialog before deleting" is good.
-- **For any story with UI changes:** Always include "Verify in browser using dev-browser skill" as acceptance criteria. This ensures visual verification of frontend work.
+- Include project-type-appropriate verification criteria:
+  - **UI stories**: Include "Verify visually in browser" as an acceptance criterion.
+  - **API stories**: Include "Endpoint responds correctly to requests" as an acceptance criterion.
+  - **CLI stories**: Include "Command produces expected output" as an acceptance criterion.
+  - **Library stories**: Include "Module is importable and documented" as an acceptance criterion.
 
 ### 4. Functional Requirements
 Numbered list of specific functionalities:
@@ -173,7 +180,7 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Each task card shows colored priority badge (red=high, yellow=medium, gray=low)
 - [ ] Priority visible without hovering or clicking
 - [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
+- [ ] Verify visually in browser
 
 ### US-003: Add priority selector to task edit
 **Description:** As a user, I want to change a task's priority when editing it.
@@ -183,7 +190,7 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Shows current priority as selected
 - [ ] Saves immediately on selection change
 - [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
+- [ ] Verify visually in browser
 
 ### US-004: Filter tasks by priority
 **Description:** As a user, I want to filter the task list to see only high-priority items when I'm focused.
@@ -193,7 +200,7 @@ Add priority levels to tasks so users can focus on what matters most. Tasks can 
 - [ ] Filter persists in URL params
 - [ ] Empty state message when no tasks match filter
 - [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
+- [ ] Verify visually in browser
 
 ## Functional Requirements
 

@@ -42,6 +42,7 @@ yourself and independently decide which task to work on based on the priority ru
 11. **IMPORTANT — Commit strategy**:
     - **If this is a NEW task** (was ⬜ Not Started before): Create a concise conventional commit message focused on user impact.
     - **If this is a REWORK of a 🔴 Incomplete task** (the task had INSPECTOR FEEDBACK): Use `git commit --amend` to amend the previous commit. Update the commit message to indicate the rework: append `(after review)` to the original message or use a message like `<original-type>: <description> (after review: fixed [specific issues])`. This ensures the rework is merged into the previous attempt's commit history.
+      - **Important**: Only use `--amend` if the commit has NOT been pushed to a remote. If the commit was already pushed, create a new commit instead (e.g., `fix: address review feedback for task XX`).
 
 12. Once you have finished one task, **STOP** and return control to the orchestrator.
     You shall NOT attempt implementing multiple tasks in one call.
