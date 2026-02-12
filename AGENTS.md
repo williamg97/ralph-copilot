@@ -28,7 +28,7 @@ echo "⚠️  No preflight commands configured — update AGENTS.md with your pr
 ## Conventions
 
 - **Commit format**: Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`)
-- **Branch naming**: `feature/{feature-name}`, `fix/{issue-id}`
+- **Branch naming**: `feature/{feature-name-kebab-case}`, `fix/{issue-id}` — Ralph-generated branches use `feature/` prefix derived from the plan's feature name in kebab-case
 - **Test files**: Co-located with source (e.g., `foo.test.ts` next to `foo.ts`)
 - **Code style**: Enforced by linter — do not override
 
@@ -49,3 +49,4 @@ docs/          # Documentation
 - Follow existing patterns in the codebase — don't introduce new frameworks or libraries without explicit approval
 - When unsure about architecture, read `02.plan.md` in the current PRD folder
 - Commit after each completed task with a conventional commit message
+- Ralph loop auto-creates and checks out the feature branch from `PROGRESS.md` — no manual branch setup needed

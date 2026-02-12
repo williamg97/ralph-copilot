@@ -90,6 +90,21 @@ If you cannot call subagents, STOP and tell the user you cannot run Ralph mode.
 If the user did not provide a PRD directory path, ask for it.
 If they only gave a JIRA ID, ask them to paste the PRD folder path.
 
+### Step 0a — Ensure feature branch
+
+After locating the PRD directory, ensure you are on the correct feature branch:
+
+1. Read the `**Branch**` field from `PROGRESS.md` (or from `02.plan.md` if PROGRESS doesn't have it yet).
+2. Check the current branch: `git branch --show-current`
+3. If already on the correct branch, proceed.
+4. If NOT on the correct branch:
+   - Check if the branch exists: `git branch --list <branch-name>`
+   - If it exists: `git checkout <branch-name>`
+   - If it does not exist: `git checkout -b <branch-name> main`
+5. If no `**Branch**` field is found in either file, log a warning ("No branch name found in plan artifacts — proceeding on current branch") and continue without switching.
+
+This ensures all implementation work happens on an isolated feature branch, matching the upstream Ralph pattern.
+
 ### Step 1 — Pause gate (`PAUSE.md`)
 
 Before doing anything else (including delegating to a subagent), check whether the PRD folder
@@ -215,6 +230,7 @@ Inputs:
 
 You must:
 1. Read `PROGRESS.md` to understand what is done, what remains, and the **current phase**.
+1a. **Verify branch**: Read the `**Branch**` field from `PROGRESS.md`. Run `git branch --show-current` and confirm you are on the correct branch. If not, run `git checkout <branch-name>` before doing anything else. If no branch field exists, proceed on the current branch.
 2. **IMPORTANT**: Check for 🔴 Incomplete tasks first. If any exist in the current phase, pick ONE Incomplete task as your highest priority.
 3. If no Incomplete tasks exist in the current phase, list all remaining Not Started (⬜) tasks and pick ONE you think is the most important next step.
    (Focus on tasks in the current phase only—do not jump to next phase tasks.)
@@ -364,6 +380,7 @@ If you need to create `PROGRESS.md`, use this template and adapt it based on the
 # Progress Tracker: <Short title>
 
 **Epic**: <JIRA-1234>
+**Branch**: `feature/<feature-name-kebab-case>`
 **Started**: <YYYY-MM-DD>
 **Last Updated**: <YYYY-MM-DD>
 **HITL Mode**: false (set to true to enable Human-in-the-Loop validation at phase boundaries)

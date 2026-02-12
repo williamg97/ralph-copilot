@@ -91,6 +91,8 @@ Brief technical summary of what will be built.
 ```markdown
 # Implementation Plan: {Feature Name}
 
+**Branch**: `feature/{feature-name-kebab-case}`
+
 ## Architecture Overview
 How this feature fits into the existing system.
 
@@ -117,6 +119,8 @@ Which tasks depend on which others.
 ## Risks & Considerations
 Known unknowns and deferred decisions.
 ```
+
+**Branch naming:** Derive the branch name from the feature name in kebab-case, prefixed with `feature/`. Example: "User Notification System" → `feature/user-notification-system`. This must match in both `02.plan.md` and `PROGRESS.md`.
 
 ### Phase Design Rules
 
@@ -186,6 +190,7 @@ Use the Ralph-compatible format:
 # Progress Tracker: {Feature Name}
 
 **Epic**: {identifier}
+**Branch**: `feature/{feature-name-kebab-case}`
 **Started**: {YYYY-MM-DD}
 **Last Updated**: {YYYY-MM-DD}
 **HITL Mode**: false

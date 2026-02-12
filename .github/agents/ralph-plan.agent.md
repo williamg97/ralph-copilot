@@ -123,6 +123,8 @@ Create an implementation plan that organizes work into phases:
 ```markdown
 # Implementation Plan: {Feature Name}
 
+**Branch**: `feature/{feature-name-kebab-case}`
+
 ## Architecture Overview
 How the feature fits into the existing system. Include a brief description of the approach.
 
@@ -156,6 +158,8 @@ Describe or list task dependencies so the executor knows what order is safe.
 - Known risks or areas of uncertainty
 - Decisions deferred to implementation
 ```
+
+**Branch naming:** Derive the branch name from the feature name in kebab-case, prefixed with `feature/`. For example, a "User Notification System" PRD becomes `feature/user-notification-system`. This branch name must be consistent across `02.plan.md` and `PROGRESS.md`.
 
 **Phase design principles:**
 - Each phase should be a **usable increment** — something that could be demonstrated or tested independently
@@ -220,6 +224,7 @@ Use this exact structure:
 # Progress Tracker: {Feature Name}
 
 **Epic**: {JIRA ID or feature name}
+**Branch**: `feature/{feature-name-kebab-case}`
 **Started**: {YYYY-MM-DD}
 **Last Updated**: {YYYY-MM-DD}
 **HITL Mode**: false
