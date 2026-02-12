@@ -124,12 +124,12 @@ Known unknowns and deferred decisions.
 
 ### Phase Design Rules
 
-1. **Vertical slices over horizontal layers**: Each phase MUST deliver a vertical slice — data + logic + user-facing wiring. A phase that only adds backend plumbing without any user-visible change is strongly discouraged. If backend-only work is necessary, it must be followed within the same phase by a task that exposes it to the user (route, menu item, UI component). Avoid the anti-pattern of "Foundation → Core logic → Integration → UI/polish" where all user-facing wiring is deferred to the last phase.
+1. **Vertical slices over horizontal layers**: For projects with a user-facing layer (UI, CLI, API consumers), each phase SHOULD deliver a vertical slice — data + logic + consumer-facing wiring. Avoid the anti-pattern of "Foundation → Core logic → Integration → UI/polish" where all wiring is deferred to the last phase. For purely backend/library projects, phases should still deliver testable, demonstrable increments (e.g., callable API endpoint, working CLI command, importable module with tests).
 2. **Size**: 2-5 tasks per phase. If >5, split the phase.
-3. **Increment**: Each phase MUST produce a user-facing, testable, demonstrable increment — not just passing unit tests, but something a user can navigate to and interact with.
-4. **Exit criteria**: Should be verifiable AND include reachability ("user can navigate to feature X from the main menu", not just "tests pass").
+3. **Increment**: Each phase MUST produce a testable, demonstrable increment. For UI projects: something a user can navigate to and interact with. For backend/API projects: a working endpoint, service, or module with integration tests. For libraries/CLIs: a callable interface with documented usage.
+4. **Exit criteria**: Should be verifiable. For UI projects, include reachability ("user can navigate to feature X"). For backend projects, include integration criteria ("endpoint responds correctly", "CLI command produces expected output", "module is importable and tested").
 5. **Total scope**: 4-12 tasks for a typical feature. 12-20 for large features. If >20, the PRD scope is too large — suggest splitting.
-6. **Wiring task**: Any phase that introduces user-facing features MUST include a final task that wires features into the application's navigation, routing, or entry points. This task ensures nothing is built but unreachable.
+6. **Wiring task**: Any phase that introduces consumer-facing features MUST include a task that wires them into the appropriate entry points — UI navigation/routing for frontend apps, route registration for APIs, command registration for CLIs, public exports for libraries. This ensures nothing is built but unreachable.
 
 ---
 
@@ -180,7 +180,7 @@ to handle, gotchas, or relevant documentation links.
 5. **File-explicit**: List exact files to create/modify — this dramatically improves coder accuracy
 6. **UI tasks**: Always include "Verify visually in browser" as a criterion for front-end changes
 7. **No orphans**: Every task must trace back to at least one specification requirement (SR-*)
-8. **Wiring required**: Any task that adds user-facing features MUST include an acceptance criterion: "Feature is reachable by a user through the application's existing navigation/routing" — not just "component renders in isolation" or "unit tests pass". If the task adds a page, verify the route is registered AND a navigation link exists.
+8. **Wiring required**: Any task that adds consumer-facing features MUST include an acceptance criterion verifying the feature is reachable through its intended entry point. For UI apps: "Feature is reachable by a user through the application's existing navigation/routing." For APIs: "Endpoint is registered and responds to requests." For CLIs: "Command is registered and documented in help output." For libraries: "Module is exported and importable." Do not accept "component renders in isolation" or "unit tests pass" as sole proof of completion.
 
 ---
 
@@ -274,11 +274,11 @@ Before presenting the plan to the user:
 - [ ] Codebase research was done (not just reading the PRD)
 - [ ] Specification maps all PRD requirements
 - [ ] Plan has well-sized phases (2-5 tasks each)
-- [ ] Each phase delivers a vertical slice with user-facing output (not just backend plumbing)
-- [ ] Every phase with user-facing features includes a wiring/integration task ensuring features are navigable
+- [ ] Each phase delivers a demonstrable increment (vertical slice for UI apps; working endpoint/command/module for backend)
+- [ ] Every phase with consumer-facing features includes a wiring/integration task ensuring features are reachable (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries)
 - [ ] Task files are specific enough for a coder to implement
 - [ ] Acceptance criteria are verifiable, not vague
-- [ ] User-facing tasks include reachability criteria ("feature accessible from main navigation")
+- [ ] Consumer-facing tasks include reachability criteria appropriate to the project type (UI: "accessible from navigation"; API: "endpoint registered and responding"; CLI: "command registered and documented"; Library: "exported and importable")
 - [ ] Every task lists specific files to modify
 - [ ] Dependencies between tasks are documented
 - [ ] PROGRESS.md is populated and correctly formatted
