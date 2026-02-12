@@ -124,11 +124,12 @@ Known unknowns and deferred decisions.
 
 ### Phase Design Rules
 
-1. **Order**: Foundation (data, config) → Core logic (business rules, API) → Integration → UI/polish
+1. **Vertical slices over horizontal layers**: Each phase MUST deliver a vertical slice — data + logic + user-facing wiring. A phase that only adds backend plumbing without any user-visible change is strongly discouraged. If backend-only work is necessary, it must be followed within the same phase by a task that exposes it to the user (route, menu item, UI component). Avoid the anti-pattern of "Foundation → Core logic → Integration → UI/polish" where all user-facing wiring is deferred to the last phase.
 2. **Size**: 2-5 tasks per phase. If >5, split the phase.
-3. **Increment**: Each phase should produce a testable, demonstrable increment.
-4. **Exit criteria**: Should be verifiable (tests pass, endpoint responds, migration runs).
+3. **Increment**: Each phase MUST produce a user-facing, testable, demonstrable increment — not just passing unit tests, but something a user can navigate to and interact with.
+4. **Exit criteria**: Should be verifiable AND include reachability ("user can navigate to feature X from the main menu", not just "tests pass").
 5. **Total scope**: 4-12 tasks for a typical feature. 12-20 for large features. If >20, the PRD scope is too large — suggest splitting.
+6. **Wiring task**: Any phase that introduces user-facing features MUST include a final task that wires features into the application's navigation, routing, or entry points. This task ensures nothing is built but unreachable.
 
 ---
 
@@ -179,6 +180,7 @@ to handle, gotchas, or relevant documentation links.
 5. **File-explicit**: List exact files to create/modify — this dramatically improves coder accuracy
 6. **UI tasks**: Always include "Verify visually in browser" as a criterion for front-end changes
 7. **No orphans**: Every task must trace back to at least one specification requirement (SR-*)
+8. **Wiring required**: Any task that adds user-facing features MUST include an acceptance criterion: "Feature is reachable by a user through the application's existing navigation/routing" — not just "component renders in isolation" or "unit tests pass". If the task adds a page, verify the route is registered AND a navigation link exists.
 
 ---
 
@@ -272,8 +274,11 @@ Before presenting the plan to the user:
 - [ ] Codebase research was done (not just reading the PRD)
 - [ ] Specification maps all PRD requirements
 - [ ] Plan has well-sized phases (2-5 tasks each)
+- [ ] Each phase delivers a vertical slice with user-facing output (not just backend plumbing)
+- [ ] Every phase with user-facing features includes a wiring/integration task ensuring features are navigable
 - [ ] Task files are specific enough for a coder to implement
 - [ ] Acceptance criteria are verifiable, not vague
+- [ ] User-facing tasks include reachability criteria ("feature accessible from main navigation")
 - [ ] Every task lists specific files to modify
 - [ ] Dependencies between tasks are documented
 - [ ] PROGRESS.md is populated and correctly formatted
