@@ -1,5 +1,7 @@
 # Ralph — Iterative AI Implementation Agent for VS Code Copilot
 
+> **⚠️ Warning:** Ralph orchestrates multiple AI agent stages that can consume a **significant amount of AI usage** (tokens/requests). A single pipeline run may involve many LLM calls across PRD generation, planning, and iterative implementation with quality-gate loops. Be mindful of your Copilot usage limits and costs before kicking off a full run.
+
 Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a feature idea from requirements through to a fully implemented solution with quality gates.
 
 ## Pipeline
@@ -178,3 +180,8 @@ When a task fails inspection, it's marked 🔴 Incomplete with structured feedba
 
 - VS Code with GitHub Copilot (agent mode)
 - Custom agents support (VS Code 1.106+)
+
+## Acknowledgements
+
+- Based on [snarktank/ralph](https://github.com/snarktank/ralph/tree/main) — the original Ralph agent pipeline
+- Initial gist and inspiration by [@gsemet](https://github.com/gsemet)
