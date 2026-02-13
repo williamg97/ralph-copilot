@@ -1,30 +1,41 @@
+<!-- ⚠️ UNCONFIGURED: Replace all TODO markers below with your project's actual values -->
+
 # Project Agent Configuration
 
-This file provides project-specific context for AI coding agents (Ralph loop, Coder subagent, etc.).
+This file is auto-loaded by VS Code Copilot. It provides project-specific context for all AI
+interactions, including the Ralph agent pipeline.
 
 ## Preflight
 
 Run these commands to validate changes before marking a task complete:
 
 ```bash
-# ⚠️ REPLACE THESE with your project's actual preflight commands!
-# Examples:
+# TODO: Replace with your project's actual preflight commands. Examples:
 #   just preflight
-#   npm run lint && npm run typecheck && npm run test
+#   pnpm run lint && pnpm run typecheck && pnpm run test
 #   make checks
-echo "❌ No preflight commands configured — update AGENTS.md with your project's checks" && exit 1
+#   cargo clippy && cargo test
+echo "❌ Configure preflight in AGENTS.md" && exit 1
 ```
 
 ## Project Context
 
-<!-- Describe your project's architecture, tech stack, and key design decisions here -->
+<!-- TODO: Fill in your project's tech stack. Remove lines that don't apply. -->
 
-- **Language/Runtime**: (e.g., TypeScript / Node.js 20)
-- **Framework**: (e.g., Next.js 14, Express, FastAPI)
-- **Database**: (e.g., PostgreSQL with Prisma ORM)
-- **Testing**: (e.g., Vitest, Jest, pytest)
-- **Build tool**: (e.g., Vite, Webpack, esbuild)
-- **Package manager**: (e.g., pnpm, npm, yarn, cargo)
+- **Language/Runtime**: <!-- e.g., TypeScript / Node.js 20, Python 3.12, Go 1.22 -->
+- **Framework**: <!-- e.g., Next.js 14, Express, FastAPI, Rails -->
+- **Database**: <!-- e.g., PostgreSQL with Prisma ORM, MongoDB, SQLite -->
+- **Testing**: <!-- e.g., Vitest, Jest, pytest, go test -->
+- **Build tool**: <!-- e.g., Vite, Webpack, esbuild, Cargo -->
+- **Package manager**: <!-- e.g., pnpm, npm, yarn, pip, cargo -->
+
+## Coding Standards
+
+<!-- TODO: Add your project-specific coding standards. Examples: -->
+<!-- - Use functional components with hooks (no class components) -->
+<!-- - Prefer named exports over default exports -->
+<!-- - All functions must have JSDoc/docstring comments -->
+<!-- - Error handling: use Result types, not try/catch -->
 
 ## Conventions
 
@@ -35,7 +46,7 @@ echo "❌ No preflight commands configured — update AGENTS.md with your projec
 
 ## Directory Structure
 
-<!-- Describe key directories so agents know where things go -->
+<!-- TODO: Describe your project's key directories. Examples: -->
 
 ```
 src/           # Application source code

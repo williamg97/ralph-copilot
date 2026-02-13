@@ -288,6 +288,12 @@ Use this exact structure:
 
 ---
 
+## Learnings
+
+<!-- Coder agents append reusable patterns, gotchas, and conventions discovered during implementation -->
+
+---
+
 ## Change Log
 
 | Date | Task | Action | Agent | Details |

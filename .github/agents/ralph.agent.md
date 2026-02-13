@@ -163,9 +163,10 @@ tracker without the orchestrator or subagent racing those changes.
 
 Read, in this order:
 1. `PROGRESS.md` (including current phase and phase status)
-2. The titles, phases, and status of tasks in `03-tasks-*`
-3. `01.specification.md` only if you need to re-anchor scope
-4. `02.plan.md` only if you're stuck on architecture decisions
+2. The `## Learnings` section in `PROGRESS.md` if present — include any learnings in the coder subagent dispatch context so previous iterations' discoveries are available
+3. The titles, phases, and status of tasks in `03-tasks-*`
+4. `01.specification.md` only if you need to re-anchor scope
+5. `02.plan.md` only if you're stuck on architecture decisions
 
 ### Step 3a — Note incomplete tasks (for awareness only)
 
@@ -387,6 +388,12 @@ If you need to create `PROGRESS.md`, use this template and adapt it based on the
 |-------|-----------|------------------------|--------------|-----------------|--------|
 | Phase 1 | ✅ | [link or inline summary] | (pending) | (pending) | Awaiting Approval |
 | Phase 2 | ⬜ | (pending) | (pending) | (pending) | Not Started |
+
+---
+
+## Learnings
+
+<!-- Coder agents append reusable patterns, gotchas, and conventions discovered during implementation -->
 
 ---
 

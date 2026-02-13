@@ -37,12 +37,14 @@ yourself and independently decide which task to work on based on the priority ru
 
 9. Update `PROGRESS.md` to mark the task as ✅ Completed.
 
-10. If all tasks in the current phase are now completed, update the Phase Status in `PROGRESS.md` to indicate the phase is complete.
+10. **Record learnings** — if you discovered reusable patterns, gotchas, or non-obvious conventions during this task, append them as bullet points to the `## Learnings` section in `PROGRESS.md`. Only record genuinely reusable knowledge (e.g., "this codebase uses X for Y", "don't forget to update Z when changing W"), not task-specific details. Skip this step if nothing notable was discovered.
 
-11. **IMPORTANT — Commit strategy**:
+11. If all tasks in the current phase are now completed, update the Phase Status in `PROGRESS.md` to indicate the phase is complete.
+
+12. **IMPORTANT — Commit strategy**:
     - **If this is a NEW task** (was ⬜ Not Started before): Create a concise conventional commit message focused on user impact.
     - **If this is a REWORK of a 🔴 Incomplete task** (the task had INSPECTOR FEEDBACK): Use `git commit --amend` to amend the previous commit. Update the commit message to indicate the rework: append `(after review)` to the original message or use a message like `<original-type>: <description> (after review: fixed [specific issues])`. This ensures the rework is merged into the previous attempt's commit history.
       - **Important**: Only use `--amend` if the commit has NOT been pushed to a remote. If the commit was already pushed, create a new commit instead (e.g., `fix: address review feedback for task XX`).
 
-12. Once you have finished one task, **STOP** and return control to the orchestrator.
+13. Once you have finished one task, **STOP** and return control to the orchestrator.
     You shall NOT attempt implementing multiple tasks in one call.

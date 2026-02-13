@@ -1,6 +1,6 @@
 # Ralph — Iterative AI Implementation Agent for VS Code Copilot
 
-> **⚠️ Warning:** Ralph orchestrates multiple AI agent stages that can consume a **significant amount of AI usage** (tokens/requests). A single pipeline run may involve many LLM calls across PRD generation, planning, and iterative implementation with quality-gate loops. Be mindful of your Copilot usage limits and costs before kicking off a full run.
+> **⚠️ Warning:** Ralph orchestrates multiple AI agent stages that can consume a **significant amount of AI usage** (tokens/requests). A single pipeline run may involve many LLM calls across PRD generation, planning, and iterative implementation with quality-gate loops. Be mindful of your Copilot usage limits and costs before kicking off a full run & ensure you use the right model for the right agents.
 
 Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a feature idea from requirements through to a fully implemented solution with quality gates.
 
@@ -56,7 +56,6 @@ your-project/
 │   │       ├── task-inspector.md
 │   │       ├── phase-inspector.md
 │   │       └── journey-verifier.md
-│   ├── copilot-instructions.md      # ← customize this (always-on Copilot context)
 │   ├── prompts/                     # Slash commands (/prd, /plan)
 │   │   ├── plan.prompt.md
 │   │   └── prd.prompt.md
@@ -65,50 +64,17 @@ your-project/
 │       │   └── SKILL.md
 │       └── prd/
 │           └── SKILL.md
-├── AGENTS.md                        # ← customize (preflight + agent-specific config)
+├── AGENTS.md                        # ← customize this (project config + preflight)
 └── ...
 ```
 
 ### 2. Configure project context
 
-Ralph uses **two configuration files**. They serve different purposes and are loaded differently:
+Ralph uses a single **`AGENTS.md`** file in the project root for all configuration — tech stack, coding standards, preflight commands, conventions, and agent workflow notes.
 
-#### `.github/copilot-instructions.md` — Always-on project context
+`AGENTS.md` is **auto-loaded** by VS Code Copilot ([docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-an-agentsmd-file)), so its contents are included in every chat request.
 
-This is a [VS Code Copilot custom instructions file](https://code.visualstudio.com/docs/copilot/customization/custom-instructions). Copilot **automatically includes** its contents in every chat request — you don't need to reference it from agent files.
-
-Put your **tech stack, coding standards, and project conventions** here:
-
-```markdown
-# Project Instructions
-
-## Tech Stack
-- Language: TypeScript / Node.js 20
-- Framework: Next.js 14 (App Router)
-- Database: PostgreSQL with Prisma ORM
-- Testing: Vitest
-- Package manager: pnpm
-
-## Coding Standards
-- Use functional components with hooks (no class components)
-- Prefer named exports over default exports
-- All functions must have JSDoc comments
-- Error handling: use Result types, not try/catch
-
-## Project Structure
-- src/app/       — Next.js routes and pages
-- src/lib/       — Shared utilities and business logic
-- src/components/ — React components
-- prisma/        — Database schema and migrations
-```
-
-This context benefits **all** Copilot interactions (completions, chat, agents, inline edits), not just Ralph.
-
-#### `AGENTS.md` — Agent-specific configuration
-
-This file is read **explicitly by the Ralph subagents** during execution (via `read_file`). It is NOT auto-loaded by Copilot.
-
-Put your **preflight commands and agent-specific workflow notes** here:
+Open `AGENTS.md` and fill in the `TODO` markers with your project's values:
 
 ```markdown
 ## Preflight
@@ -116,17 +82,20 @@ Put your **preflight commands and agent-specific workflow notes** here:
 pnpm run lint && pnpm run typecheck && pnpm run test
 \```
 
+## Project Context
+- **Language/Runtime**: TypeScript / Node.js 20
+- **Framework**: Next.js 14 (App Router)
+- **Testing**: Vitest
+- **Package manager**: pnpm
+
+## Coding Standards
+- Use functional components with hooks (no class components)
+- Prefer named exports over default exports
+
 ## Notes for AI Agents
 - Always run preflight before marking a task complete
 - Commit after each completed task with a conventional commit message
 ```
-
-#### Why two files?
-
-| File | Loaded by | When | What goes here |
-|------|-----------|------|----------------|
-| `.github/copilot-instructions.md` | Copilot (automatic) | Every chat/completion request | Tech stack, coding standards, conventions |
-| `AGENTS.md` | Agents (explicit read) | During Ralph loop execution | Preflight commands, agent workflow rules |
 
 You can also create **file-pattern instructions** (e.g., `react.instructions.md` for React conventions) that Copilot applies only when working with matching files. See [VS Code custom instructions docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions) for details.
 
@@ -197,6 +166,10 @@ A recurring theme across tiers 1–4 is **reachability verification** — ensuri
 
 This prevents the common AI-agent failure mode where every unit test passes but users can't actually reach the new features.
 
+### Knowledge Transfer
+
+After completing each task, the Coder subagent records any reusable patterns, gotchas, or conventions it discovered in the `## Learnings` section of `PROGRESS.md`. The orchestrator passes these learnings to subsequent coder iterations, so knowledge accumulates across the implementation loop — similar to the "Codebase Patterns" approach in [snarktank/ralph](https://github.com/snarktank/ralph).
+
 ## Requirements
 
 - VS Code with GitHub Copilot (agent mode)
@@ -205,4 +178,4 @@ This prevents the common AI-agent failure mode where every unit test passes but 
 ## Acknowledgements
 
 - Based on [snarktank/ralph](https://github.com/snarktank/ralph/tree/main) — the original Ralph agent pipeline
-- Initial gist and inspiration by [@gsemet](https://github.com/gsemet)
+- Initial gist by [@gsemet](https://github.com/gsemet)
