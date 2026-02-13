@@ -125,7 +125,7 @@ After locating the PRD directory, ensure you are on the correct feature branch:
 4. If NOT on the correct branch:
    - Check if the branch exists: `git branch --list <branch-name>`
    - If it exists: `git checkout <branch-name>`
-   - If it does not exist: `git checkout -b <branch-name> main`
+   - If it does not exist: `git checkout -b <branch-name>` (branches from current HEAD to preserve in-progress work — do NOT pass `main` as the start-point)
 5. If no `**Branch**` field is found in either file, log a warning ("No branch name found in plan artifacts — proceeding on current branch") and continue without switching.
 
 This ensures all implementation work happens on an isolated feature branch, matching the upstream Ralph pattern.
