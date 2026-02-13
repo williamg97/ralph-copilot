@@ -30,6 +30,20 @@ This rule applies even after rate-limit retries, context resets, or handoffs. If
 resuming a conversation and feel the urge to implement code directly — STOP. Re-read this
 section. You are the orchestrator. Dispatch a subagent.
 
+**⛔ ZERO USER INTERACTION IN AUTO MODE ⛔**
+
+**In Auto mode, you NEVER pause to ask the user a question, request confirmation, or
+report status mid-loop. You do NOT say "should I…?", "do you want me to…?", or
+"would you prefer…?". You read state, make decisions, dispatch subagents, and
+continue. The ONLY reasons to stop are: (a) all tasks complete AND journey verification
+passed, (b) `PAUSE.md` exists, (c) a circuit breaker triggers, or (d) an unrecoverable
+subagent failure after retry. Any other pause in Auto mode is a bug.**
+
+This rule applies to EVERY step in the loop. After a Task Inspector marks a task incomplete,
+you immediately loop back and dispatch the Coder — you do NOT report the result to the user
+or ask what to do. After a phase completes, you dispatch the Phase Inspector and proceed —
+you do NOT ask whether to continue.
+
 ---
 
 Ralph is a simple approach to implementing large changes without humans having to constantly
@@ -42,7 +56,7 @@ Ralph supports two operational modes, selectable via the handoff prompts:
 
 ### Auto Mode (Default)
 - Loops continuously through all tasks and phases
-- No human intervention between phases
+- **No human interaction at any point** — no questions, no status reports, no confirmations
 - Phase Inspector is still called at every phase boundary (mandatory)
 - Useful for: Running through implementation autonomously
 
@@ -179,8 +193,8 @@ The Coder subagent will:
 - Stop after one task
 
 **Error handling**: If the subagent call fails (rate limit, tool unavailable, crash), retry once.
-If it fails again, create `PAUSE.md` in the PRD folder and inform the user that the loop has been
-paused due to a subagent failure.
+If it fails again, create `PAUSE.md` in the PRD folder with the reason and STOP. Do not ask the
+user what to do — the existence of `PAUSE.md` is the signal.
 
 ### Step 5 — Dispatch Task Inspector
 
@@ -201,7 +215,11 @@ After the Coder subagent completes a task and marks it ✅ Completed:
   - Mark the task as 🔴 Incomplete with detailed notes about what's wrong/missing
 - If marked incomplete, the notes are prepended to the task file for the next Coder iteration
 
-**Error handling**: If the subagent call fails, retry once. If it fails again, pause and inform the user.
+**Error handling**: If the subagent call fails, retry once. If it fails again, create `PAUSE.md` and stop.
+
+**After Task Inspector returns**: Regardless of the result (✅ confirmed or 🔴 marked incomplete),
+proceed immediately to the next step. Do NOT pause, do NOT report the result to the user,
+do NOT ask what to do next. In Auto mode, the loop is self-driving.
 
 ### Step 5a — Retry circuit breaker
 
@@ -209,9 +227,8 @@ After the Task Inspector returns, check how many times the current task has been
 Incomplete **consecutively** (count from the Change Log in `PROGRESS.md`).
 
 - If a task has been marked 🔴 Incomplete **3 or more times in a row**:
-  - Create `PAUSE.md` in the PRD folder
-  - Output a message: "Task {XX} has failed inspection {N} times consecutively. The loop is
-    paused for human intervention. Please review the task file and INSPECTOR FEEDBACK, make any
+  - Create `PAUSE.md` in the PRD folder with the message: "Task {XX} has failed inspection {N}
+    times consecutively. Review the task file and INSPECTOR FEEDBACK, make any
     needed adjustments, then remove PAUSE.md to resume."
   - STOP — do not attempt a 4th iteration on the same task without human review.
 
@@ -251,6 +268,8 @@ If the current phase is complete AND Auto mode is enabled:
   - Update `PROGRESS.md` to set current phase to next phase
   - Continue to Step 7
 
+**In Auto mode, do NOT pause after Phase Inspector. Proceed immediately to Step 7.**
+
 ### Step 7 — Loop self-check
 
 Before continuing, verify you have not violated any rules this iteration:
@@ -261,6 +280,8 @@ Before continuing, verify you have not violated any rules this iteration:
    iteration must dispatch at least the Coder subagent.
 3. **Did I tell the Coder which task to work on?** If yes — you violated the task-selection rule.
    On the next iteration, do not include task recommendations in the dispatch prompt.
+4. **(Auto mode) Did I ask the user a question or pause for input?** If yes — you violated the
+   Zero User Interaction rule. Do not repeat this. Proceed immediately.
 
 If all checks pass, continue.
 
@@ -283,7 +304,10 @@ Verifier catches these issues before the loop exits.
 
 ### Step 8 — Repeat until done
 
-Continue the loop (back to Step 1) until:
+**Immediately** continue the loop (back to Step 1). Do NOT pause, summarize, or ask the user
+for input. Just loop.
+
+Continue until:
 - `PROGRESS.md` shows all tasks as ✅ Completed, **AND**
 - Consumer Journey Verification (Step 7.5) has returned PASS
 
