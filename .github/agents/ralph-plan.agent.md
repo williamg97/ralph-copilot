@@ -56,12 +56,18 @@ You will generate these files (in order):
 
 ## Your Workflow
 
+### Step 0 — Detect project state & bootstrap AGENTS.md
+
+Before planning, ensure the project is configured. Follow the **Step 0** instructions in the plan skill — this detects whether `AGENTS.md` is unconfigured, auto-detects the tech stack from manifest files for existing projects (or asks the user for greenfield projects), and populates `AGENTS.md` with confirmed values.
+
+Do NOT proceed to planning if `AGENTS.md` is still unconfigured — the plan quality depends on knowing the tech stack, conventions, and preflight commands.
+
 ### Step 1 — Understand the codebase
 
 Before planning anything, gather context:
 
 1. Read the PRD fully
-2. If an `AGENTS.md` or `CONSTITUTION.md` exists in the project root, read it for project conventions, tech stack, and preflight commands
+2. Read `AGENTS.md` (should now be configured after Step 0)
 3. Search the codebase to understand:
    - Project structure and architecture
    - Existing patterns and conventions

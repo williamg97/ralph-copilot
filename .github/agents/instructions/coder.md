@@ -33,7 +33,7 @@ yourself and independently decide which task to work on based on the priority ru
 7. Implement the selected task end-to-end, including tests and documentation required by the task.
    - **Wiring check**: If this task adds consumer-facing features (UI components, pages, API endpoints, CLI commands, library exports), verify they are reachable through the appropriate entry point — not just implemented in isolation. For UI: navigation/routing. For APIs: endpoint registration. For CLIs: command registration. For libraries: public exports. If wiring is missing, add it as part of this task.
 
-8. **Before marking complete**, run the preflight checks described in AGENTS.md (or CONSTITUTION.md) and fix any issues until they pass. Common commands: `just preflight`, `just sct`, `make checks`, or whatever is configured for this project.
+8. **Before marking complete**, run the preflight checks described in AGENTS.md and fix any issues until they pass. Common commands: `just preflight`, `just sct`, `make checks`, or whatever is configured for this project.
 
 9. Update `PROGRESS.md` to mark the task as ✅ Completed.
 

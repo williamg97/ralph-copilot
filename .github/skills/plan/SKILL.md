@@ -11,15 +11,141 @@ Take a PRD and produce the structured artifacts needed for iterative implementat
 
 ## The Job
 
-1. Receive a PRD (from file or handoff)
-2. Research the existing codebase for context
-3. Generate `01.specification.md` — technical spec
-4. Generate `02.plan.md` — phased implementation plan
-5. Generate `03-tasks-phase{N}-{NN}.md` — one file per task
-6. Generate `PROGRESS.md` — progress tracker
-7. Present summary for human review
+1. Detect project state & ensure `AGENTS.md` is configured
+2. Receive a PRD (from file or handoff)
+3. Research the existing codebase for context
+4. Generate `01.specification.md` — technical spec
+5. Generate `02.plan.md` — phased implementation plan
+6. Generate `03-tasks-phase{N}-{NN}.md` — one file per task
+7. Generate `PROGRESS.md` — progress tracker
+8. Present summary for human review
 
 **Important:** Do NOT implement any code. Only produce planning artifacts.
+
+---
+
+## Step 0 — Detect Project State & Bootstrap AGENTS.md
+
+Before doing anything else, determine whether the project is configured for Ralph.
+
+### 0a. Read AGENTS.md
+
+Read `AGENTS.md` from the project root. If it doesn't exist, check for `.github/copilot-instructions.md` as a fallback.
+
+If neither file exists, create `AGENTS.md` from the template at the end of this section.
+
+### 0b. Check for unconfigured sentinel
+
+Look for the sentinel comment on line 1:
+
+```
+<!-- ⚠️ UNCONFIGURED: Replace all TODO markers below with your project's actual values -->
+```
+
+If the sentinel is **absent**, `AGENTS.md` is already configured → skip to the Codebase Research Checklist.
+
+If the sentinel is **present**, proceed to classification.
+
+### 0c. Classify the project
+
+Scan the project root and immediate subdirectories for source code signals:
+
+| Signal | Indicates |
+|--------|-----------|
+| `package.json`, `node_modules/` | Node.js / JavaScript / TypeScript |
+| `Cargo.toml` | Rust |
+| `pyproject.toml`, `setup.py`, `requirements.txt` | Python |
+| `go.mod` | Go |
+| `*.sln`, `*.csproj` | .NET / C# |
+| `pom.xml`, `build.gradle` | Java / Kotlin |
+| `Gemfile` | Ruby |
+| `src/`, `lib/`, `app/`, `cmd/` | Existing source directories |
+| `.github/workflows/`, `Makefile`, `justfile` | CI / build tooling |
+
+**Greenfield** = sentinel present + no manifest files + no meaningful source directories (only `.github/`, config files, docs)
+
+**Brownfield-unconfigured** = sentinel present + manifest files or source directories exist
+
+### 0d. Auto-detect (brownfield-unconfigured)
+
+Read discovered manifest files to extract project configuration:
+
+**From `package.json`:**
+- `name` → project name
+- `dependencies` / `devDependencies` → framework (react, next, express, fastify, etc.), test runner (vitest, jest, mocha), build tool (vite, webpack, esbuild, tsc)
+- `scripts` → preflight candidates (look for `lint`, `typecheck`, `test`, `check`, `build`)
+- `packageManager` field or lock files (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm)
+
+**From `pyproject.toml`:**
+- `[tool.poetry]` or `[project]` → framework, dependencies
+- `[tool.pytest]` → pytest for testing
+- `[tool.ruff]` or `[tool.black]` → linter/formatter
+
+**From `Cargo.toml`:**
+- `[dependencies]` → framework (actix-web, axum, rocket, etc.)
+- Preflight: `cargo clippy && cargo test`
+
+**From `go.mod`:**
+- `module` → module path
+- Preflight: `go vet ./... && go test ./...`
+
+**Also check for:**
+- `Makefile` → look for `lint`, `test`, `check` targets
+- `justfile` → look for `preflight`, `check`, `lint`, `test` recipes
+- `.github/workflows/*.yml` → look for CI steps that run tests/lint
+
+Present the detected values to the user:
+
+```
+I detected the following project configuration:
+
+- **Language/Runtime**: TypeScript / Node.js 20
+- **Framework**: Next.js 14
+- **Testing**: Vitest
+- **Build tool**: Vite
+- **Package manager**: pnpm
+- **Preflight command**: `pnpm run lint && pnpm run typecheck && pnpm run test`
+
+Should I update AGENTS.md with these values? You can also correct anything above.
+```
+
+After the user confirms (or provides corrections), replace the sentinel and TODO markers in `AGENTS.md` with the confirmed values. Remove the sentinel comment from line 1.
+
+### 0e. Bootstrap (greenfield)
+
+Ask the user key questions before proceeding:
+
+```
+This appears to be a new project without existing source code. Before I can create a good plan, I need to know:
+
+1. What language/runtime will you use?
+   A. TypeScript / Node.js
+   B. Python
+   C. Go
+   D. Rust
+
+2. What type of project is this?
+   A. Web app (frontend + backend)
+   B. API / backend service
+   C. CLI tool
+   D. Library / package
+
+3. Do you have a preferred framework?
+   (e.g., Next.js, Express, FastAPI, Axum — or "no preference")
+
+4. Do you have a preferred test runner?
+   (e.g., Vitest, Jest, pytest, go test — or "no preference")
+```
+
+After the user responds, populate `AGENTS.md` with the provided values and remove the sentinel.
+
+Set the preflight command to a working placeholder until real tooling is configured:
+
+```bash
+echo "⚠️ Preflight placeholder — configure real commands after project scaffolding"
+```
+
+**Important for greenfield plans:** Ensure Phase 1 of the generated plan includes project scaffolding — initializing the project, setting up the directory structure, configuring the build tool, and getting a basic lint + typecheck + test pipeline running. Update the preflight command in `AGENTS.md` as the last task in Phase 1.
 
 ---
 
@@ -28,7 +154,7 @@ Take a PRD and produce the structured artifacts needed for iterative implementat
 Before generating any artifacts, gather this context:
 
 - [ ] Read the full PRD
-- [ ] Read `AGENTS.md` or `CONSTITUTION.md` if present (for project conventions and preflight commands)
+- [ ] Read `AGENTS.md` (should now be configured after Step 0)
 - [ ] Identify the tech stack (languages, frameworks, build tools)
 - [ ] Map the project directory structure
 - [ ] Find existing code related to the feature

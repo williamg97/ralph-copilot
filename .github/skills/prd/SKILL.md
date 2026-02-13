@@ -11,12 +11,82 @@ Create detailed Product Requirements Documents that are clear, actionable, and s
 
 ## The Job
 
-1. Receive a feature description from the user
-2. Ask 3-5 essential clarifying questions (with lettered options)
-3. Generate a structured PRD based on answers
-4. Save to `tasks/[feature-name]/prd.md` (create the folder if needed)
+1. Detect project state for context-aware questions
+2. Receive a feature description from the user
+3. Ask 3-5 essential clarifying questions (with lettered options)
+4. Generate a structured PRD based on answers
+5. Save to `tasks/[feature-name]/prd.md` (create the folder if needed)
 
 **Important:** Do NOT start implementing. Just create the PRD.
+
+---
+
+## Step 0: Detect Project State
+
+Before asking clarifying questions, quickly assess the project context so you can ask better questions.
+
+### 0a. Read AGENTS.md
+
+Read `AGENTS.md` from the project root (fall back to `.github/copilot-instructions.md`). If neither exists, note that the project is unconfigured but continue — the PRD agent doesn't gate on configuration.
+
+### 0b. Check configuration status
+
+Look for the sentinel comment on line 1:
+
+```
+<!-- ⚠️ UNCONFIGURED: Replace all TODO markers below with your project's actual values -->
+```
+
+If `AGENTS.md` is **configured** (no sentinel): use its tech stack, conventions, and constraints to inform your clarifying questions and PRD content. Skip to Step 1.
+
+If `AGENTS.md` is **unconfigured** (sentinel present) or missing: do a quick scan.
+
+### 0c. Quick project scan
+
+Scan the root for manifest files (`package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `*.sln`, `Gemfile`) and source directories (`src/`, `lib/`, `app/`).
+
+**If existing code is found (brownfield):** Note the detected tech stack. Use it to ask more targeted clarifying questions — for example, if you see a Next.js app, you can ask about routing patterns, existing page structure, or data fetching approach. Mention the detected stack in your questions so the user can confirm or correct.
+
+**If no code is found (greenfield):** Include tech stack choices in your clarifying questions (see examples below). The plan agent will handle full configuration later — you just need enough context to write good requirements.
+
+### 0d. Adapt your clarifying questions
+
+**For brownfield projects with known stack:**
+```
+I see this is a Next.js 14 project with TypeScript. A few questions about the feature:
+
+1. Where should this feature live in the app?
+   A. New page/route
+   B. Extension of an existing page
+   C. Background service / API only
+   D. Shared component / library addition
+
+2. ...
+```
+
+**For greenfield / unknown stack:**
+```
+This looks like a new project. I need a bit of context before writing the PRD:
+
+1. What type of project is this?
+   A. Web application (frontend + backend)
+   B. API / backend service
+   C. CLI tool
+   D. Library / package
+
+2. What's the intended tech stack?
+   A. TypeScript / Node.js
+   B. Python
+   C. Go
+   D. Rust
+   E. Other: [please specify]
+
+3. [Feature-specific question]...
+```
+
+After the PRD is saved, if `AGENTS.md` was unconfigured, add a note:
+
+> **Next step:** Before running the plan agent, `AGENTS.md` should be configured with your tech stack and preflight commands. The plan agent will help you set this up automatically.
 
 ---
 

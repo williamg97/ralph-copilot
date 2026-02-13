@@ -440,7 +440,7 @@ The Coder must address all points in this section before marking the task comple
 <PREFLIGHT>
 To validate an implementation, ensure the preflight validation script passes.
 
-See in the AGENTS.md or CONSTITUTION.md for the syntax to run preflight checks.
+See AGENTS.md for the syntax to run preflight checks.
 
 - `just preflight`
 - `just sct`
