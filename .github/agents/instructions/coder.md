@@ -17,11 +17,7 @@ yourself and independently decide which task to work on based on the priority ru
 
 1. Read `PROGRESS.md` to understand what is done, what remains, and the **current phase**.
 
-2. **Verify branch**: Read the `**Branch**` field from `PROGRESS.md`. Run `git branch --show-current` and confirm you are on the correct branch. If not:
-   - Check if the branch exists: `git branch --list <branch-name>`
-   - If it exists: `git checkout <branch-name>`
-   - If it does not exist: `git checkout -b <branch-name>` (branches from current HEAD — do NOT base on `main`)
-   If no branch field exists, proceed on the current branch.
+2. **Commit on the current branch.** Ralph does not manage branches — the user is responsible for being on the correct branch before starting the loop.
 
 3. **IMPORTANT — Check for 🔴 Incomplete tasks first.** If any exist in the current phase, pick ONE Incomplete task as your highest priority. These represent rework flagged by the Task Inspector and MUST be addressed before any new work.
 

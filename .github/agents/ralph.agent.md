@@ -115,21 +115,6 @@ always read the file fresh each time you dispatch.
 If the user did not provide a PRD directory path, ask for it.
 If they only gave a JIRA ID, ask them to paste the PRD folder path.
 
-### Step 0a — Ensure feature branch
-
-After locating the PRD directory, ensure you are on the correct feature branch:
-
-1. Read the `**Branch**` field from `PROGRESS.md` (or from `02.plan.md` if PROGRESS doesn't have it yet).
-2. Check the current branch: `git branch --show-current`
-3. If already on the correct branch, proceed.
-4. If NOT on the correct branch:
-   - Check if the branch exists: `git branch --list <branch-name>`
-   - If it exists: `git checkout <branch-name>`
-   - If it does not exist: `git checkout -b <branch-name>` (branches from current HEAD to preserve in-progress work — do NOT pass `main` as the start-point)
-5. If no `**Branch**` field is found in either file, log a warning ("No branch name found in plan artifacts — proceeding on current branch") and continue without switching.
-
-This ensures all implementation work happens on an isolated feature branch, matching the upstream Ralph pattern.
-
 ### Step 1 — Identity check + Pause gate
 
 **⛔ Before anything else, re-read the Identity Rule at the top of this file. You are the orchestrator. You dispatch subagents. You do NOT write code.**
@@ -326,7 +311,6 @@ If you need to create `PROGRESS.md`, use this template and adapt it based on the
 # Progress Tracker: <Short title>
 
 **Epic**: <JIRA-1234>
-**Branch**: `feature/<feature-name-kebab-case>`
 **Started**: <YYYY-MM-DD>
 **Last Updated**: <YYYY-MM-DD>
 **HITL Mode**: false (set to true to enable Human-in-the-Loop validation at phase boundaries)

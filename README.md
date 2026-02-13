@@ -185,7 +185,7 @@ tasks/
 - **Pause**: Create a `PAUSE.md` file in the feature folder to halt Ralph mid-loop. Remove it to resume.
 - **HITL mode**: Use the "Start Ralph Loop (HITL)" handoff from the plan agent, or the "Human-in-the-Loop Ralph Loop" self-handoff to get phase validation pauses.
 - **Edit mid-flight**: Pause the loop, edit task files or PROGRESS.md, then remove PAUSE.md to resume.
-- **Feature branches**: Ralph automatically creates and checks out a `feature/{name}` branch derived from the plan. The branch name is stored in `PROGRESS.md` and verified at the start of every iteration.
+- **Feature branches**: Ralph commits on whichever branch you are on. Check out your feature branch before starting the loop.
 
 ## Safety & Error Handling
 
