@@ -7,16 +7,11 @@ tools:
 handoffs:
   - label: Start Ralph Loop (Auto)
     agent: ralph-loop
-    prompt: |
-      Start the Ralph loop in Auto mode. The PRD folder with spec, plan, tasks, and PROGRESS.md is ready.
-      Read the progress file first and proceed with the next task. Do NOT pause between phases.
+    prompt: "Start the Ralph loop in Auto mode. The PRD folder with spec, plan, tasks, and PROGRESS.md is ready. Read the progress file first and proceed with the next task. Do NOT pause between phases."
     send: false
   - label: Start Ralph Loop (HITL)
     agent: ralph-loop
-    prompt: |
-      Start the Ralph loop with Human-in-the-Loop (HITL) enabled.
-      The PRD folder with spec, plan, tasks, and PROGRESS.md is ready.
-      Read the progress file first. Pause at each phase boundary for human validation before proceeding.
+    prompt: "Start the Ralph loop with HITL enabled. The PRD folder with spec, plan, tasks, and PROGRESS.md is ready. Read the progress file first. Pause at each phase boundary for human validation before proceeding."
     send: false
 ---
 

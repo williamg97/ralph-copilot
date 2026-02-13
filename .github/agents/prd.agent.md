@@ -6,9 +6,7 @@ tools:
 handoffs:
   - label: Decompose into Plan
     agent: ralph-plan
-    prompt: |
-      Take the PRD that was just generated and decompose it into a technical specification,
-      implementation plan, and phased task files. The PRD folder path will be in the conversation above.
+    prompt: "Take the PRD that was just generated and decompose it into a technical specification, implementation plan, and phased task files. The PRD folder path will be in the conversation above."
     send: false
 ---
 

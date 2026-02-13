@@ -7,17 +7,11 @@ tools:
 handoffs:
   - label: Auto Ralph Loop
     agent: ralph-loop
-    prompt: |
-      Start or continue the Ralph loop. Read the progress file first and proceed with the next task.
-      Do NOT pause for human validation between phases—proceed automatically until all tasks are complete.
+    prompt: "Start or continue the Ralph loop. Read the progress file first and proceed with the next task. Do NOT pause for human validation between phases—proceed automatically until all tasks are complete."
     send: false
   - label: Human-in-the-Loop Ralph Loop
     agent: ralph-loop
-    prompt: |
-      Start or Continue the Ralph loop with Human-in-the-Loop (HITL) enabled.
-      Read the progress file first. When a phase is marked as complete (all its tasks done),
-      the Phase Inspector will generate a validation report and PAUSE to ask the human to validate and confirm phase completion before proceeding to the next phase.
-      Only continue to the next phase after receiving human approval.
+    prompt: "Start or continue the Ralph loop with HITL enabled. Read the progress file first. When a phase completes, the Phase Inspector generates a validation report and PAUSEs for human approval before proceeding to the next phase."
     send: false
 ---
 
