@@ -16,10 +16,10 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 ```
 
 ### Stage 1: PRD Agent (`prd`)
-Generates a Product Requirements Document from a feature description. Asks clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
+Generates a Product Requirements Document from a feature description. Detects the project state (greenfield vs existing codebase) to ask better clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
 
 ### Stage 2: Ralph Plan Mode (`ralph-plan`)
-Takes a PRD and decomposes it into:
+Detects whether `AGENTS.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Then takes a PRD and decomposes it into:
 - **`01.specification.md`** — Technical specification with detailed requirements
 - **`02.plan.md`** — Phased implementation plan with dependency ordering
 - **`03-tasks-*.md`** — Individual task files with acceptance criteria
@@ -27,7 +27,7 @@ Takes a PRD and decomposes it into:
 
 ### Stage 3: Ralph Loop (`ralph-loop`)
 Iteratively implements each task using subagents:
-- **Coder subagent** — Autonomously selects and implements one task at a time, runs preflight checks, verifies feature wiring, commits
+- **Coder subagent** — Autonomously selects and implements one task at a time, runs preflight checks, verifies feature wiring, records learnings, and commits
 - **Task Inspector** — Verifies each completed task against acceptance criteria and reachability
 - **Phase Inspector** — Validates entire phases at phase boundaries including cross-task integration and reachability audits
 - **Journey Verifier** — Final gate that traces every user story from the PRD to a reachable entry point before the loop exits
@@ -74,7 +74,11 @@ Ralph uses a single **`AGENTS.md`** file in the project root for all configurati
 
 `AGENTS.md` is **auto-loaded** by VS Code Copilot ([docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-an-agentsmd-file)), so its contents are included in every chat request.
 
-Open `AGENTS.md` and fill in the `TODO` markers with your project's values:
+You can configure it in two ways:
+
+**Option A: Let the agents detect it.** If you leave `AGENTS.md` unconfigured (with its `TODO` markers), the plan agent will auto-detect your tech stack from manifest files (`package.json`, `Cargo.toml`, etc.) and offer to populate it before planning. The PRD agent also adapts its questions based on detected project state.
+
+**Option B: Fill it in manually.** Open `AGENTS.md` and replace the `TODO` markers with your project's values:
 
 ```markdown
 ## Preflight
@@ -85,12 +89,23 @@ pnpm run lint && pnpm run typecheck && pnpm run test
 ## Project Context
 - **Language/Runtime**: TypeScript / Node.js 20
 - **Framework**: Next.js 14 (App Router)
+- **Database**: PostgreSQL with Prisma ORM
 - **Testing**: Vitest
+- **Build tool**: Vite
 - **Package manager**: pnpm
 
 ## Coding Standards
 - Use functional components with hooks (no class components)
 - Prefer named exports over default exports
+
+## Conventions
+- **Commit format**: Conventional Commits (`feat:`, `fix:`, `chore:`)
+- **Branch naming**: `feature/{name}`, `fix/{issue-id}`
+- **Test files**: Co-located (`foo.test.ts` next to `foo.ts`)
+
+## Directory Structure
+src/           # Application source code
+tests/         # Test files (if not co-located)
 
 ## Notes for AI Agents
 - Always run preflight before marking a task complete
@@ -116,8 +131,8 @@ Or use prompt commands:
 ### Typical Workflow
 
 1. Select the **prd** agent → describe your feature → answer clarifying questions → PRD is saved
-2. Click **"Decompose into Plan"** handoff → plan agent generates spec + plan + tasks
-3. Click **"Start Ralph Loop"** handoff → Ralph implements everything with QA gates
+2. Click **"Decompose into Plan"** handoff → plan agent configures `AGENTS.md` if needed, then generates spec + plan + tasks
+3. Click **"Start Ralph Loop (Auto)"** or **"Start Ralph Loop (HITL)"** handoff → Ralph implements everything with QA gates
 
 ## File Structure (generated per feature)
 
@@ -138,9 +153,15 @@ tasks/
 ## Controlling the Loop
 
 - **Pause**: Create a `PAUSE.md` file in the feature folder to halt Ralph mid-loop. Remove it to resume.
-- **HITL mode**: Use the "Human-in-the-Loop Ralph Loop" handoff to get phase validation pauses.
+- **HITL mode**: Use the "Start Ralph Loop (HITL)" handoff from the plan agent, or the "Human-in-the-Loop Ralph Loop" self-handoff to get phase validation pauses.
 - **Edit mid-flight**: Pause the loop, edit task files or PROGRESS.md, then remove PAUSE.md to resume.
 - **Feature branches**: Ralph automatically creates and checks out a `feature/{name}` branch derived from the plan. The branch name is stored in `PROGRESS.md` and verified at the start of every iteration.
+
+## Safety & Error Handling
+
+- **Circuit breaker**: If a task fails inspection 3 consecutive times, Ralph automatically creates `PAUSE.md` and halts the loop for human intervention.
+- **Subagent failure**: If a subagent call fails (rate limit, tool unavailable, crash), Ralph retries once. If it fails again, it creates `PAUSE.md` and pauses.
+- **Commit amend for rework**: When the coder reworks a 🔴 Incomplete task, it uses `git commit --amend` to update the previous commit rather than creating a new one.
 
 ## Quality Assurance
 
