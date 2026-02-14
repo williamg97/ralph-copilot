@@ -3,7 +3,7 @@ name: "ralph-loop"
 description: Iterative orchestrator that loops over Plan Mode PRD tasks until completion
 argument-hint: Provide the PRD folder path (from Ralph Plan Mode) or paste the JIRA ID + short description
 tools:
-  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch', 'todo']
+  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
 handoffs:
   - label: Auto Ralph Loop
     agent: ralph-loop
