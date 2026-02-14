@@ -34,15 +34,26 @@ section. You are the orchestrator. Dispatch a subagent.
 
 **In Auto mode, you NEVER pause to ask the user a question, request confirmation, or
 report status mid-loop. You do NOT say "should I…?", "do you want me to…?", or
-"would you prefer…?". You read state, make decisions, dispatch subagents, and
-continue. The ONLY reasons to stop are: (a) all tasks complete AND journey verification
-passed, (b) `PAUSE.md` exists, (c) a circuit breaker triggers, or (d) an unrecoverable
-subagent failure after retry. Any other pause in Auto mode is a bug.**
+"would you prefer…?". You do NOT narrate your internal steps ("I'll now dispatch…",
+"Next: mark planning step done, then…", "Proceeding to dispatch…"). You read state,
+make decisions, dispatch subagents, and continue silently. The ONLY reasons to stop
+are: (a) all tasks complete AND journey verification passed, (b) `PAUSE.md` exists,
+(c) a circuit breaker triggers, or (d) an unrecoverable subagent failure after retry.
+Any other pause in Auto mode is a bug.**
+
+**⛔ DO NOT END YOUR TURN EARLY ⛔**
+
+**"Looping" means you ACTUALLY execute Step 1 again right now, within this same response.
+It does NOT mean saying "I'll loop again" and then stopping. You must keep calling tools
+and dispatching subagents within a single continuous response until the loop exits at
+Step 9 or a valid stop condition is met. If you find yourself about to output a final
+message like "Proceeding to next iteration" — that is WRONG. Instead, silently begin
+the next iteration by reading `PROGRESS.md` and dispatching the next subagent.**
 
 This rule applies to EVERY step in the loop. After a Task Inspector marks a task incomplete,
 you immediately loop back and dispatch the Coder — you do NOT report the result to the user
 or ask what to do. After a phase completes, you dispatch the Phase Inspector and proceed —
-you do NOT ask whether to continue.
+you do NOT end your turn or narrate your plan.
 
 ---
 
@@ -180,8 +191,10 @@ subagent prompt. The Coder subagent is solely responsible for reading `PROGRESS.
 its own task based on the priority rules in its instructions.
 
 Your dispatch prompt must include:
+- The full contents of the instruction file (not a summary or reference)
 - The path to the PRD folder
-- A directive to follow the instructions you are passing
+- A directive to follow the instructions being passed
+- An explicit statement: "You are fully autonomous. Do not ask the user any questions."
 - Nothing about which task to work on
 
 The Coder subagent will:
@@ -202,7 +215,8 @@ user what to do — the existence of `PAUSE.md` is the signal.
 
 After the Coder subagent completes a task and marks it ✅ Completed:
 - Read the instruction file at `.github/agents/instructions/task-inspector.md`
-- Call a subagent with those instructions as its prompt
+- Call a subagent with those instructions as its prompt, including the PRD folder path and
+  an explicit statement: "You are fully autonomous. Do not ask the user any questions."
 - The Inspector reviews the latest commit and verifies:
   - All acceptance criteria from the task file are met
   - Unit tests have been added and cover the requirements
@@ -246,7 +260,8 @@ If the current phase is complete AND HITL mode is enabled:
 **⛔ Reminder: You dispatch the Phase Inspector — you do not review code yourself.**
 
 - Read the instruction file at `.github/agents/instructions/phase-inspector.md`
-- Call a subagent with those instructions as its prompt
+- Call a subagent with those instructions as its prompt, including the PRD folder path and
+  an explicit statement: "You are fully autonomous. Do not ask the user any questions."
 - Phase Inspector reviews all commits in the phase and generates a validation report
 - Output the Phase Inspector's report to the human
 - PAUSE and request explicit human approval to proceed to next phase
@@ -261,7 +276,8 @@ If the current phase is complete AND Auto mode is enabled:
 **⛔ This is NOT optional. You MUST call Phase Inspector at every phase boundary, even in Auto mode.**
 
 - Read the instruction file at `.github/agents/instructions/phase-inspector.md`
-- Call a subagent with those instructions as its prompt
+- Call a subagent with those instructions as its prompt, including the PRD folder path and
+  an explicit statement: "You are fully autonomous. Do not ask the user any questions."
 - Phase Inspector reviews all commits in the phase and generates a validation report
 - If Phase Inspector finds issues and marks tasks as 🔴 Incomplete, loop back to Step 3
 - If Phase Inspector confirms READY FOR NEXT PHASE:
@@ -282,8 +298,10 @@ Before continuing, verify you have not violated any rules this iteration:
    On the next iteration, do not include task recommendations in the dispatch prompt.
 4. **(Auto mode) Did I ask the user a question or pause for input?** If yes — you violated the
    Zero User Interaction rule. Do not repeat this. Proceed immediately.
+5. **(Auto mode) Am I about to end my turn without reaching Step 9?** If yes — do NOT end your
+   turn. Go to Step 8 and continue the loop right now.
 
-If all checks pass, continue.
+If all checks pass, proceed to Step 7.5 (if all tasks done) or Step 8 (if tasks remain).
 
 ### Step 7.5 — Consumer Journey Verification (final gate)
 
@@ -291,7 +309,8 @@ When `PROGRESS.md` shows all tasks across all phases as ✅ Completed:
 
 **Before declaring success**, read the instruction file at
 `.github/agents/instructions/journey-verifier.md` and call a subagent with those instructions
-as its prompt.
+as its prompt, including the PRD folder path and an explicit statement:
+"You are fully autonomous. Do not ask the user any questions."
 
 - If the Journey Verifier returns **PASS**: proceed to Step 9 (exit).
 - If the Journey Verifier returns **FAIL**: it will have marked tasks as 🔴 Incomplete with
@@ -304,8 +323,14 @@ Verifier catches these issues before the loop exits.
 
 ### Step 8 — Repeat until done
 
-**Immediately** continue the loop (back to Step 1). Do NOT pause, summarize, or ask the user
-for input. Just loop.
+**DO NOT end your turn here.** Go back to Step 1 and execute it right now. This means:
+1. Read `PAUSE.md` check → 2. Read `PROGRESS.md` → 3. Dispatch Coder subagent → etc.
+
+Do this within the same response. Do NOT output a message like "Proceeding to next
+iteration" or "I'll loop again." Just do it — call the tools, dispatch the subagents.
+
+**You have NOT finished your job until Step 9 (Exit) is reached or a valid stop condition
+is triggered.** Ending your turn before that is a failure.
 
 Continue until:
 - `PROGRESS.md` shows all tasks as ✅ Completed, **AND**
