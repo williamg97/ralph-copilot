@@ -246,7 +246,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 | | snarktank/ralph | anthropics/ralph-wiggum | ralph-copilot |
 |---|---|---|---|
 | **PRD generation** | Skill-based PRD → saves markdown | None (user provides the prompt) | Dedicated PRD agent with clarifying questions and project-state detection |
-| **Plan decomposition** | Skill converts PRD to flat JSON user stories | None (phases can be mentioned in prompt but aren't enforced) | Dedicated plan agent producing specification + phased plan + individual task files + progress tracker |
+| **Plan decomposition** | Skill converts PRD to dependency-ordered JSON user stories (priority field guides execution order) | None — by design, the user structures work in their prompt | Dedicated plan agent producing specification + phased plan + individual task files + progress tracker |
 | **Task granularity** | Flat list of user stories ordered by priority | Single prompt covering all work | Hierarchical: phases → tasks → acceptance criteria, with dependency tracking and file-level guidance |
 | **Tech stack detection** | Manual `AGENTS.md` / `CLAUDE.md` setup | None | Auto-detects from manifest files (`package.json`, `Cargo.toml`, etc.) and offers to populate `AGENTS.md` |
 
@@ -256,9 +256,9 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 |---|---|---|---|
 | **QA tiers** | 1 (coding agent runs quality checks) | 1 (self-correction via tests/linters) | 4 (Coder preflight → Task Inspector → Phase Inspector → Journey Verifier) |
 | **Dedicated inspector** | No — same agent implements and verifies | No — same agent self-corrects | Yes — separate Task Inspector and Phase Inspector subagents review each task and phase independently |
-| **Reachability audits** | Not built in | Not built in | Multi-tier verification that features are wired into entry points (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries) |
+| **Reachability audits** | Runtime browser verification via `dev-browser` skill (UI only) | Not built in | Static code analysis verifying features are wired into entry points (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries) — does not start the application or verify at runtime |
 | **Circuit breaker** | Max iterations on the bash loop | `--max-iterations` flag | Auto-pause (`PAUSE.md`) after 3 consecutive inspection failures on the same task |
-| **Browser verification** | `dev-browser` skill for visual UI checks | Not built in | Acceptance criteria mention it; concrete tooling is a [backlog item](TODO.md) |
+| **Browser verification** | `dev-browser` skill for runtime visual UI checks (loads pages, interacts with UI, takes screenshots) | Not built in | Static reachability analysis only; runtime browser tooling is a [backlog item](TODO.md) |
 
 ### Orchestration & Control
 
@@ -266,7 +266,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 |---|---|---|---|
 | **Human-in-the-loop** | Not built in | Not built in | Built-in HITL mode — pauses at phase boundaries for human validation |
 | **Pause mechanism** | Kill the bash script | `/cancel-ralph` command | Create `PAUSE.md` to halt mid-loop; remove to resume |
-| **Phase enforcement** | No phases — flat story list | No phases (can be described in prompt) | Enforced — all tasks in a phase must complete before the next phase begins |
+| **Phase enforcement** | No enforced phases — flat story list ordered by `priority` field (dependency ordering is guided by the PRD skill but not structurally enforced) | No phases (can be described in prompt but aren't enforced) | Enforced — all tasks in a phase must complete before the next phase begins |
 | **Role separation** | Single agent writes code and manages state | Single agent does everything | Strict — orchestrator never writes code; Coder subagent never chooses which task to skip; inspectors never implement fixes |
 | **Task selection** | Agent picks highest-priority `passes: false` story | Agent decides what to work on | Coder subagent autonomously selects (orchestrator forbidden from recommending) |
 | **Commit strategy** | One commit per story | Up to the agent | `git commit --amend` for rework iterations; conventional commits for new tasks |
@@ -279,9 +279,9 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 
 2. **Phased execution with enforced boundaries** — Instead of a flat story list, work is organized into phases with exit criteria. Phase Inspector validates cross-task integration at each boundary before proceeding, catching issues that per-task checks miss.
 
-3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. This addresses the common AI-agent failure mode of building features that pass unit tests but aren't wired into the application.
+3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. Tiers 2–4 are static code analysis (reading source files to trace routes, exports, and registrations) rather than runtime verification. This addresses the common AI-agent failure mode of building features that pass unit tests but aren't wired into the application, though it cannot catch runtime errors that snarktank/ralph's `dev-browser` skill would.
 
-4. **Structured planning stage** — The plan agent produces a technical specification, phased implementation plan, and individual task files with file-level guidance. snarktank/ralph converts PRDs to a flat JSON story list; ralph-wiggum has no planning stage at all.
+4. **Structured planning stage** — The plan agent produces a technical specification, phased implementation plan, and individual task files with file-level guidance. snarktank/ralph converts PRDs to a flat JSON story list with dependency-aware priority ordering. ralph-wiggum has no planning stage by design — it delegates task structure entirely to the user's prompt, trading planning overhead for simplicity.
 
 5. **Human-in-the-loop mode** — Built-in HITL support with validation pauses at phase boundaries, useful for work requiring stakeholder review or compliance gates.
 
@@ -297,9 +297,9 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 
 ### Trade-offs
 
-- **Token usage** — The multi-agent approach with 4 QA tiers consumes significantly more tokens per task than the single-agent loops in snarktank/ralph or ralph-wiggum.
+- **Token usage** — The multi-agent approach with 4 QA tiers consumes roughly 4–6x more tokens per feature than snarktank/ralph and ~20x more than ralph-wiggum. Each task requires at minimum 2 subagent calls (coder + task inspector), with additional phase inspector calls at boundaries and a journey verifier call at the end. Subagent instruction files are re-read from disk every iteration, further increasing per-iteration cost.
 - **No fresh context** — snarktank/ralph's fresh-instance-per-iteration model avoids context window exhaustion on large projects. ralph-copilot runs within a single Copilot session, which can hit context limits on long runs.
-- **No browser verification tooling** — snarktank/ralph includes a `dev-browser` skill for automated UI testing. ralph-copilot notes it in acceptance criteria but lacks concrete tooling ([backlog](TODO.md)).
+- **No runtime browser verification** — snarktank/ralph includes a `dev-browser` skill that actually loads pages and interacts with UI at runtime. ralph-copilot's reachability audits are static code analysis only — they trace routes and exports by reading source files but never start the application. This means ralph-copilot can miss runtime errors, broken pages, or import cycles that snarktank/ralph would catch. Concrete browser tooling is a [backlog item](TODO.md).
 - **No archiving** — snarktank/ralph auto-archives completed runs when the branch changes. ralph-copilot does not yet have this ([backlog](TODO.md)).
 - **Platform lock-in** — snarktank/ralph works with Amp and Claude Code; ralph-wiggum works with Claude Code. ralph-copilot requires VS Code with GitHub Copilot agent mode.
 
