@@ -2,9 +2,9 @@
 # Ralph — Installer / Updater
 # Usage:
 #   # Public repo (or with gh CLI authenticated):
-#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | sh -s -- --branch dev
-#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | sh -s -- --force
+#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | bash -s -- --branch dev
+#   curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | bash -s -- --force
 #
 #   # Private repo — set a token or use gh CLI:
 #   GITHUB_TOKEN=ghp_xxx ./install.sh
@@ -24,6 +24,11 @@ FORCE=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --branch|-b)
+      if [[ $# -lt 2 || "$2" == -* ]]; then
+        echo "Error: --branch requires a value." >&2
+        echo "Usage: install.sh [--branch <ref>] [--force]" >&2
+        exit 1
+      fi
       BRANCH="$2"
       shift 2
       ;;
@@ -62,7 +67,7 @@ AUTH_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 if [[ -z "$AUTH_TOKEN" ]] && command -v gh >/dev/null 2>&1; then
   AUTH_TOKEN=$(gh auth token 2>/dev/null || true)
 fi
-if [[ -z "$AUTH_TOKEN" ]]; then
+if [[ -z "$AUTH_TOKEN" ]] && command -v git >/dev/null 2>&1; then
   # Try git's credential helper (e.g., macOS keychain, credential-manager)
   AUTH_TOKEN=$(printf "protocol=https\nhost=github.com\n" | git credential fill 2>/dev/null | grep "^password=" | cut -d= -f2 || true)
 fi
@@ -77,13 +82,16 @@ download() {
   local url="$1"
   if command -v curl >/dev/null 2>&1; then
     if [[ -n "$AUTH_TOKEN" ]]; then
-      curl -fsSL -H "Authorization: token ${AUTH_TOKEN}" "$url"
+      # Use curl config from stdin to avoid exposing the token in process arguments.
+      printf 'header = "Authorization: token %s"\n' "$AUTH_TOKEN" | curl -fsSL -K - "$url"
     else
       curl -fsSL "$url"
     fi
   elif command -v wget >/dev/null 2>&1; then
     if [[ -n "$AUTH_TOKEN" ]]; then
-      wget -qO- --header="Authorization: token ${AUTH_TOKEN}" "$url"
+      # Avoid putting the token in argv; proceed without auth and warn the user.
+      warn "AUTH_TOKEN is set but curl is not available; downloading without authentication may fail for private resources."
+      wget -qO- "$url"
     else
       wget -qO- "$url"
     fi

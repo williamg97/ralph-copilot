@@ -49,7 +49,7 @@ Run the installer from your project's root directory. It downloads the latest Ra
 **macOS / Linux:**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | bash -s --
 ```
 
 **Windows (PowerShell):**
