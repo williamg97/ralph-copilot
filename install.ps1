@@ -117,10 +117,8 @@ try {
 
     # Create target directories
     $Dirs = @(
-        ".github/agents/instructions",
-        ".github/prompts",
-        ".github/skills/prd",
-        ".github/skills/plan"
+        ".github/agents",
+        ".github/prompts"
     )
     foreach ($Dir in $Dirs) {
         if (-not (Test-Path $Dir)) {
@@ -133,15 +131,11 @@ try {
 
     # Agents
     Copy-Item -Path (Join-Path $SourceGithub "agents/*") -Destination ".github/agents/" -Recurse -Force
-    Write-Ok "Installed .github/agents/ (4 agent files + 4 instruction files)"
+    Write-Ok "Installed .github/agents/ (3 agent files)"
 
     # Prompts
     Copy-Item -Path (Join-Path $SourceGithub "prompts/*") -Destination ".github/prompts/" -Recurse -Force
     Write-Ok "Installed .github/prompts/ (2 slash commands)"
-
-    # Skills
-    Copy-Item -Path (Join-Path $SourceGithub "skills/*") -Destination ".github/skills/" -Recurse -Force
-    Write-Ok "Installed .github/skills/ (2 skill files)"
 
     # ── Install AGENTS.md (conditionally) ────────────────────────────────────
     $AgentsStatus = "created"

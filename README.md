@@ -80,20 +80,10 @@ your-project/
 │   ├── agents/                      # Custom agents (auto-detected by Copilot)
 │   │   ├── prd.agent.md
 │   │   ├── ralph-plan.agent.md
-│   │   ├── ralph.agent.md
-│   │   └── instructions/            # Extracted subagent instruction files
-│   │       ├── coder.md
-│   │       ├── task-inspector.md
-│   │       ├── phase-inspector.md
-│   │       └── journey-verifier.md
-│   ├── prompts/                     # Slash commands (/prd, /plan)
-│   │   ├── plan.prompt.md
-│   │   └── prd.prompt.md
-│   └── skills/                      # On-demand skill instructions
-│       ├── plan/
-│       │   └── SKILL.md
-│       └── prd/
-│           └── SKILL.md
+│   │   └── ralph.agent.md
+│   └── prompts/                     # Slash commands (/prd, /plan)
+│       ├── plan.prompt.md
+│       └── prd.prompt.md
 ├── AGENTS.md                        # ← customize this (project config + preflight)
 └── ...
 ```

@@ -125,19 +125,15 @@ fi
 info "Installing agent files into .github/..."
 
 # Create target directories
-mkdir -p .github/agents/instructions
+mkdir -p .github/agents
 mkdir -p .github/prompts
-mkdir -p .github/skills/prd
-mkdir -p .github/skills/plan
 
 # Copy all .github/ contents, overwriting existing files
 cp -R "$EXTRACTED/.github/agents/"* .github/agents/
 cp -R "$EXTRACTED/.github/prompts/"* .github/prompts/
-cp -R "$EXTRACTED/.github/skills/"* .github/skills/
 
-ok "Installed .github/agents/ (4 agent files + 4 instruction files)"
+ok "Installed .github/agents/ (3 agent files)"
 ok "Installed .github/prompts/ (2 slash commands)"
-ok "Installed .github/skills/ (2 skill files)"
 
 # ── Install AGENTS.md (conditionally) ───────────────────────────────────────
 if [[ -f "AGENTS.md" ]] && [[ "$FORCE" = false ]]; then
