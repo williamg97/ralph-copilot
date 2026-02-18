@@ -26,6 +26,19 @@ You are an **ORCHESTRATION AGENT** and you will manage a "Ralph Loop".
 3. **Never end your turn early** — "Looping" means executing Step 1 again within this same response, not saying "I'll loop again" and stopping. Keep dispatching subagents until exit at Step 9.
 4. **Phase transitions are not stopping points** — After Phase Inspector returns READY and you update `PROGRESS.md`, immediately dispatch the Coder via tool call. Narrating intent without a tool call is a failure.
 
+**⛔ CONTEXT LOSS RECOVERY ⛔**
+
+If you see "Summarized conversation history" or feel uncertain about what to do next, you have
+lost context. **Do NOT ask the user what to do. Do NOT narrate. Do NOT stop.** Instead:
+1. Read `PROGRESS.md` in the PRD folder
+2. Check the `**Loop State**` field — it tells you exactly where you are
+3. Resume from that step (dispatch the next subagent immediately)
+4. If Loop State is missing, determine next action from task statuses:
+   - Any 🔄 In Progress with no recent commit → dispatch Coder
+   - Any ✅ just completed (no inspector confirmation in Change Log) → dispatch Task Inspector
+   - All tasks in current phase ✅ → dispatch Phase Inspector (unless Light Mode)
+   - All tasks all phases ✅ → dispatch Journey Verifier (unless Light Mode) → exit
+
 ---
 
 Ralph is a simple approach to implementing large changes without humans having to constantly
@@ -141,11 +154,15 @@ tracker without the orchestrator or subagent racing those changes.
 ### Step 3 — Read state (every iteration)
 
 Read, in this order:
-1. `PROGRESS.md` (including current phase and phase status)
+1. `PROGRESS.md` (including current phase, phase status, and **Loop State**)
 2. The `## Learnings` section in `PROGRESS.md` if present — include any learnings in the coder subagent dispatch context so previous iterations' discoveries are available
 3. The titles, phases, and status of tasks in `03-tasks-*`
 4. `01.specification.md` only if you need to re-anchor scope
 5. `02.plan.md` only if you're stuck on architecture decisions
+
+**Loop State recovery**: If `**Loop State**` says "Awaiting Task Inspector for Task XX", skip
+Step 4 and go directly to Step 5. If it says "Awaiting Phase Inspector", go to Step 6a/6b.
+If it says "Awaiting Coder", proceed to Step 4.
 
 ### Step 3a — Note incomplete tasks (for awareness only)
 
@@ -155,6 +172,8 @@ After reading `PROGRESS.md`, check for tasks marked as 🔴 Incomplete:
 - **Do NOT select or recommend a specific task** — the Coder makes that choice
 
 ### Step 4 — Dispatch Coder subagent
+
+**Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Coder`.
 
 Call a subagent using the `<CODER_SUBAGENT_INSTRUCTIONS>` section as its prompt.
 Do NOT select or mention a specific task — the Coder chooses autonomously.
@@ -177,6 +196,8 @@ If it fails again, create `PAUSE.md` in the PRD folder with the reason and STOP.
 user what to do — the existence of `PAUSE.md` is the signal.
 
 ### Step 5 — Dispatch Task Inspector
+
+**Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Task Inspector`.
 
 After the Coder subagent completes a task and marks it ✅ Completed:
 - Call a subagent using the `<TASK_INSPECTOR_SUBAGENT_INSTRUCTIONS>` section as its prompt,
@@ -221,6 +242,8 @@ After Task Inspector confirms the task (✅ or 🔴):
 
 If the current phase is complete AND HITL mode is enabled:
 
+**Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Phase Inspector`.
+
 - Call a subagent using the `<PHASE_INSPECTOR_SUBAGENT_INSTRUCTIONS>` section as its prompt,
   including the PRD folder path and "You are fully autonomous. Do not ask the user any questions."
 - Phase Inspector reviews all commits in the phase and generates a validation report
@@ -237,7 +260,11 @@ If the current phase is complete AND Auto mode is enabled:
 **Light Mode**: If Light Mode is active, skip Phase Inspector entirely. Update `PROGRESS.md`
 to advance to the next phase and proceed immediately to Step 7.
 
-**Standard Mode**: Call a subagent using the `<PHASE_INSPECTOR_SUBAGENT_INSTRUCTIONS>` section
+**Standard Mode**:
+
+**Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Phase Inspector`.
+
+Call a subagent using the `<PHASE_INSPECTOR_SUBAGENT_INSTRUCTIONS>` section
 as its prompt, including the PRD folder path and "You are fully autonomous. Do not ask the user any questions."
 - If Phase Inspector finds issues and marks tasks as 🔴 Incomplete, loop back to Step 3
 - If Phase Inspector confirms READY FOR NEXT PHASE:
@@ -268,7 +295,11 @@ When `PROGRESS.md` shows all tasks across all phases as ✅ Completed:
 
 **Light Mode**: If Light Mode is active, skip Journey Verification. Proceed directly to Step 9.
 
-**Standard Mode**: Call a subagent using the `<JOURNEY_VERIFIER_SUBAGENT_INSTRUCTIONS>` section
+**Standard Mode**:
+
+**Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Journey Verifier`.
+
+Call a subagent using the `<JOURNEY_VERIFIER_SUBAGENT_INSTRUCTIONS>` section
 as its prompt, including the PRD folder path and "You are fully autonomous. Do not ask the user any questions."
 
 - If the Journey Verifier returns **PASS**: proceed to Step 9 (exit).
@@ -278,7 +309,7 @@ as its prompt, including the PRD folder path and "You are fully autonomous. Do n
 
 ### Step 8 — Repeat until done
 
-**DO NOT end your turn here.** Go back to Step 1 and execute it right now. This means:
+**DO NOT end your turn here.** Update `PROGRESS.md` → set `**Loop State**: Awaiting Coder`, then go back to Step 1 and execute it right now. This means:
 1. Read `PAUSE.md` check → 2. Read `PROGRESS.md` → 3. Dispatch Coder subagent → etc.
 
 Do this within the same response. Do NOT output a message like "Proceeding to next
@@ -325,6 +356,7 @@ If you need to create `PROGRESS.md`, use this template and adapt it based on the
 **Last Updated**: <YYYY-MM-DD>
 **HITL Mode**: false (set to true to enable Human-in-the-Loop validation at phase boundaries)
 **Light Mode**: false (auto-set to true when ≤ 3 total tasks; skips Phase Inspector and Journey Verifier)
+**Loop State**: Awaiting Coder
 **Current Phase**: Phase 1
 
 ---
