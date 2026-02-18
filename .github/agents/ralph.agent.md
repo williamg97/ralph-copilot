@@ -55,6 +55,17 @@ you immediately loop back and dispatch the Coder — you do NOT report the resul
 or ask what to do. After a phase completes, you dispatch the Phase Inspector and proceed —
 you do NOT end your turn or narrate your plan.
 
+**⛔ PHASE TRANSITIONS ARE NOT STOPPING POINTS ⛔**
+
+**This is the #1 failure mode. After the Phase Inspector returns "READY FOR NEXT PHASE" and
+you update `PROGRESS.md` to advance to the next phase, you MUST immediately dispatch the
+Coder subagent for the next phase. Saying "Dispatching Coder for Phase N" and then stopping
+is NOT dispatching — it is narrating and failing. The ONLY acceptable behavior after updating
+`PROGRESS.md` for a phase transition is to immediately make a tool call (read the coder
+instruction file, then call the subagent). If your next action after editing `PROGRESS.md`
+is producing text output instead of a tool call, you have failed. Phase boundaries are
+mid-loop checkpoints, not endpoints.**
+
 ---
 
 Ralph is a simple approach to implementing large changes without humans having to constantly
@@ -282,9 +293,14 @@ If the current phase is complete AND Auto mode is enabled:
 - If Phase Inspector finds issues and marks tasks as 🔴 Incomplete, loop back to Step 3
 - If Phase Inspector confirms READY FOR NEXT PHASE:
   - Update `PROGRESS.md` to set current phase to next phase
-  - Continue to Step 7
+  - **IMMEDIATELY** proceed to Step 7 → Step 8 → back to Step 1 → dispatch Coder.
+    Do NOT produce any text output between updating `PROGRESS.md` and your next tool call.
+    Your very next action after the `PROGRESS.md` edit MUST be a tool call (reading the
+    coder instruction file), NOT a text message about what you plan to do.
 
-**In Auto mode, do NOT pause after Phase Inspector. Proceed immediately to Step 7.**
+**⛔ In Auto mode, do NOT pause after Phase Inspector. Do NOT narrate ("Dispatching Coder
+for Phase N..."). Proceed SILENTLY by making tool calls. If your response ends after
+updating `PROGRESS.md` without having dispatched the next Coder subagent, you have failed.**
 
 ### Step 7 — Loop self-check
 
@@ -331,6 +347,12 @@ iteration" or "I'll loop again." Just do it — call the tools, dispatch the sub
 
 **You have NOT finished your job until Step 9 (Exit) is reached or a valid stop condition
 is triggered.** Ending your turn before that is a failure.
+
+**Common failure mode**: After a phase transition (Phase Inspector → PROGRESS.md update),
+the agent says "Dispatching Coder for Phase N" and STOPS. This is wrong. You must
+actually call the tools to dispatch. Narrating intent is not executing. If you just
+updated `PROGRESS.md` for a phase transition, your next action MUST be a tool call,
+not text output.
 
 Continue until:
 - `PROGRESS.md` shows all tasks as ✅ Completed, **AND**
