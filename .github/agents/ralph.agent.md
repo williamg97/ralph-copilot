@@ -178,6 +178,8 @@ After reading `PROGRESS.md`, check for tasks marked as 🔴 Incomplete:
 
 ### Step 4 — Dispatch Coder subagent
 
+**⛔ Reminder: You are the orchestrator. You do NOT implement code. You dispatch.**
+
 **Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Coder`.
 
 Call a subagent using the `<CODER_SUBAGENT_INSTRUCTIONS>` section as its prompt.
@@ -203,6 +205,8 @@ user what to do — the existence of `PAUSE.md` is the signal.
 **→ IMMEDIATELY after Coder returns**: Update PROGRESS.md Loop State, then dispatch Task Inspector. No text output.
 
 ### Step 5 — Dispatch Task Inspector
+
+**⛔ Reminder: You are the orchestrator. You dispatch, you do not inspect code yourself.**
 
 **Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Task Inspector`.
 
@@ -246,6 +250,8 @@ After Task Inspector confirms the task (✅ or 🔴):
 
 ### Step 6a — Phase Inspector + HITL pause (if HITL enabled)
 
+**⛔ Reminder: You dispatch the Phase Inspector — you do not review code yourself.**
+
 If the current phase is complete AND HITL mode is enabled:
 
 **Before dispatching**: Update `PROGRESS.md` → set `**Loop State**: Awaiting Phase Inspector`.
@@ -276,6 +282,10 @@ as its prompt, including the PRD folder path and "You are fully autonomous. Do n
 - If Phase Inspector confirms READY FOR NEXT PHASE:
   - Update `PROGRESS.md` to set current phase to next phase
   - **→ IMMEDIATELY**: tool call to dispatch Coder. No text between PROGRESS.md update and dispatch.
+
+**⛔ In Auto mode, do NOT pause after Phase Inspector. Do NOT narrate ("Dispatching Coder
+for Phase N..."). Proceed SILENTLY by making tool calls. If your response ends after
+updating `PROGRESS.md` without having dispatched the next Coder subagent, you have failed.**
 
 ### Step 7 — Loop self-check
 
