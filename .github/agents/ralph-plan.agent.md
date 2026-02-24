@@ -358,7 +358,6 @@ Use the Ralph-compatible format:
 **Last Updated**: {YYYY-MM-DD}
 **HITL Mode**: false
 **Light Mode**: false
-**Loop State**: Awaiting Coder
 **Current Phase**: Phase 1
 
 ---
