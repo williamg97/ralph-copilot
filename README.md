@@ -4,6 +4,18 @@
 
 > **⚠️ Token Usage:** A full pipeline run consumes roughly **4–6x** the tokens of single-agent Ralph implementations. Use a strong model (Claude Sonnet 4, GPT-4.1) for **PRD, Plan, and Coder** stages where reasoning quality matters. Use a cheaper model (GPT-4.1 mini, etc.) for the **orchestrator and inspectors**, which only read state and review code.
 
+## TL;DR
+
+Describe a feature → Ralph writes the requirements, breaks it into tasks, implements each one, and verifies it's actually wired into your app — all without you writing a single prompt after the first one.
+
+1. **PRD agent** — you describe the feature, it asks clarifying questions and produces a requirements doc
+2. **Plan agent** — converts the PRD into a phased task list with acceptance criteria
+3. **Ralph Loop** — works through every task autonomously: implements → inspects → fixes → repeats until done, then runs a final check that every feature is actually reachable by users
+
+Install in any project in one command, configure once via `AGENTS.md`, run entirely inside VS Code Copilot.
+
+---
+
 Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a feature idea from requirements through to a fully implemented solution with quality gates.
 
 ## Pipeline
