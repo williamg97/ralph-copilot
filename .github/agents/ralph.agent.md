@@ -3,15 +3,21 @@ name: "ralph-loop"
 description: Iterative orchestrator that loops over Plan Mode PRD tasks until completion
 argument-hint: Provide the PRD folder path (from Ralph Plan Mode) or paste the JIRA ID + short description
 tools:
-  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
+  ['execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/testFailure', 'execute/runTests', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch', 'playwright/*', 'agent', 'memory', 'todo']
 handoffs:
   - label: Auto Ralph Loop
     agent: ralph-loop
-    prompt: "Start or continue the Ralph loop. Read the progress file first and proceed with the next task. Do NOT pause for human validation between phases—proceed automatically until all tasks are complete."
+    prompt: |
+      Start or continue the Ralph loop. Read the progress file first and proceed with the next task.
+      Do NOT pause for human validation between phases—proceed automatically until all tasks are complete.
     send: false
   - label: Human-in-the-Loop Ralph Loop
     agent: ralph-loop
-    prompt: "Start or continue the Ralph loop with HITL enabled. Read the progress file first. When a phase completes, the Phase Inspector generates a validation report and PAUSEs for human approval before proceeding to the next phase."
+    prompt: |
+      Start or Continue the Ralph loop with Human-in-the-Loop (HITL) enabled.
+      Read the progress file first. When a phase is marked as complete (all its tasks done),
+      the Phase Inspector will generate a validation report and PAUSE to ask the human to validate and confirm phase completion before proceeding to the next phase.
+      Only continue to the next phase after receiving human approval.
     send: false
 ---
 
