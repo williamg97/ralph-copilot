@@ -21,7 +21,7 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 Generates a Product Requirements Document from a feature description. Detects the project state (greenfield vs existing codebase) to ask better clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
 
 ### Stage 2: Ralph Plan Mode (`ralph-plan`)
-Detects whether `AGENTS.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Then takes a PRD and decomposes it into:
+Detects whether `.github/copilot-instructions.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Then takes a PRD and decomposes it into:
 - **`01.specification.md`** — Technical specification with detailed requirements
 - **`02.plan.md`** — Phased implementation plan with dependency ordering
 - **`03-tasks-*.md`** — Individual task files with acceptance criteria
@@ -42,37 +42,14 @@ Supports two modes:
 
 ## Setup
 
-### 1. Install
+### Quick start
 
-Run the installer from your project's root directory. It downloads the latest Ralph agent files into `.github/` and creates a template `AGENTS.md`.
+- **Add project config:** Copy the `.github/` folder into your project root — it contains the agent prompts and the `copilot-instructions.md` template to configure.
+- **Optional:** If you already have a `.github/` folder, manually copy in the `agents/` and `prompts/` subfolders and the `copilot-instructions.md` file.
 
-**macOS / Linux:**
+### Manual install
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | sh
-```
-
-**Windows (PowerShell):**
-
-```powershell
-irm https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.ps1 | iex
-```
-
-**Options:**
-
-| Flag | Description |
-|------|-------------|
-| `--branch <ref>` / `-Branch <ref>` | Install from a specific branch, tag, or SHA (default: `main`) |
-| `--force` / `-Force` | Overwrite `AGENTS.md` even if it already exists |
-
-**Updating:** Re-run the same command. It overwrites `.github/` files with the latest versions but preserves your customized `AGENTS.md`.
-
-**Authentication:** The scripts auto-detect credentials from `GITHUB_TOKEN`, `GH_TOKEN`, the `gh` CLI, or git's credential helper. For private repos, ensure one of these is configured.
-
-<details>
-<summary><strong>Manual install</strong></summary>
-
-Copy the `.github/` folder and `AGENTS.md` into your project's root:
+If you prefer to install files manually, copy the `.github/` folder into your project's root:
 
 ```
 your-project/
@@ -81,26 +58,26 @@ your-project/
 │   │   ├── prd.agent.md
 │   │   ├── ralph-plan.agent.md
 │   │   └── ralph.agent.md
+│   ├── copilot-instructions.md      # ← customize this (project config + preflight)
 │   └── prompts/                     # Slash commands (/prd, /plan)
 │       ├── plan.prompt.md
 │       └── prd.prompt.md
-├── AGENTS.md                        # ← customize this (project config + preflight)
 └── ...
 ```
 
-</details>
+Ralph reads `.github/copilot-instructions.md` for project settings and preflight commands. There is no required installer — copying the `.github/` folder is sufficient.
 
 ### 2. Configure project context
 
-Ralph uses a single **`AGENTS.md`** file in the project root for all configuration — tech stack, coding standards, preflight commands, conventions, and agent workflow notes.
+Ralph uses a single **`.github/copilot-instructions.md`** file for all configuration — tech stack, coding standards, preflight commands, conventions, and agent workflow notes.
 
-`AGENTS.md` is **auto-loaded** by VS Code Copilot ([docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-an-agentsmd-file)), so its contents are included in every chat request.
+`.github/copilot-instructions.md` is **natively auto-loaded** by VS Code Copilot ([docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-a-githubcopilot-instructionsmd-file)), so its contents are included in every chat request with no extra setup.
 
 You can configure it in two ways:
 
-**Option A: Let the agents detect it.** If you leave `AGENTS.md` unconfigured (with its `TODO` markers), the plan agent will auto-detect your tech stack from manifest files (`package.json`, `Cargo.toml`, etc.) and offer to populate it before planning. The PRD agent also adapts its questions based on detected project state.
+**Option A: Let the agents detect it.** If you leave `.github/copilot-instructions.md` unconfigured (with its `TODO` markers), the plan agent will auto-detect your tech stack from manifest files (`package.json`, `Cargo.toml`, etc.) and offer to populate it before planning. The PRD agent also adapts its questions based on detected project state.
 
-**Option B: Fill it in manually.** Open `AGENTS.md` and replace the `TODO` markers with your project's values:
+**Option B: Fill it in manually.** Open `.github/copilot-instructions.md` and replace the `TODO` markers with your project's values:
 
 ```markdown
 ## Preflight
@@ -153,7 +130,7 @@ Or use prompt commands:
 ### Typical Workflow
 
 1. Select the **prd** agent → describe your feature → answer clarifying questions → PRD is saved
-2. Click **"Decompose into Plan"** handoff → plan agent configures `AGENTS.md` if needed, then generates spec + plan + tasks
+2. Click **"Decompose into Plan"** handoff → plan agent configures `.github/copilot-instructions.md` if needed, then generates spec + plan + tasks
 3. Click **"Start Ralph Loop (Auto)"** or **"Start Ralph Loop (HITL)"** handoff → Ralph implements everything with QA gates
 
 ## File Structure (generated per feature)
@@ -240,7 +217,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 | **PRD generation** | Skill-based PRD → saves markdown | None (user provides the prompt) | Dedicated PRD agent with clarifying questions and project-state detection |
 | **Plan decomposition** | Skill converts PRD to dependency-ordered JSON user stories (priority field guides execution order) | None — by design, the user structures work in their prompt | Dedicated plan agent producing specification + phased plan + individual task files + progress tracker |
 | **Task granularity** | Flat list of user stories ordered by priority | Single prompt covering all work | Hierarchical: phases → tasks → acceptance criteria, with dependency tracking and file-level guidance |
-| **Tech stack detection** | Manual `AGENTS.md` / `CLAUDE.md` setup | None | Auto-detects from manifest files (`package.json`, `Cargo.toml`, etc.) and offers to populate `AGENTS.md` |
+| **Tech stack detection** | Manual `AGENTS.md` / `CLAUDE.md` setup | None | Auto-detects from manifest files (`package.json`, `Cargo.toml`, etc.) and offers to populate `.github/copilot-instructions.md` |
 
 ### Quality Assurance
 
@@ -279,7 +256,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 
 6. **Project-type-aware reachability audits** — Verification checks adapt to the project type (UI navigation, API endpoint mounting, CLI command registration, library public exports) across all QA tiers.
 
-7. **Auto-detection of project configuration** — Reads manifest files to detect the tech stack and pre-populate `AGENTS.md`, reducing manual setup compared to snarktank/ralph's manual configuration.
+7. **Auto-detection of project configuration** — Reads manifest files to detect the tech stack and pre-populate `.github/copilot-instructions.md`, reducing manual setup compared to snarktank/ralph's manual configuration.
 
 8. **Pause/resume mechanism** — `PAUSE.md` allows safely editing task files or the progress tracker mid-flight without racing the loop, more granular than killing a bash process.
 

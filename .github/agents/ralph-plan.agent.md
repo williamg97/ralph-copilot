@@ -51,7 +51,7 @@ All artifacts are written into a single folder. If the PRD is at `tasks/{feature
 
 ## The Job
 
-1. Detect project state & ensure `AGENTS.md` is configured
+1. Detect project state & ensure `.github/copilot-instructions.md` is configured
 2. Receive a PRD (from file or handoff)
 3. Research the existing codebase for context
 4. Generate `01.specification.md` — technical spec
@@ -64,15 +64,15 @@ All artifacts are written into a single folder. If the PRD is at `tasks/{feature
 
 ---
 
-## Step 0 — Detect Project State & Bootstrap AGENTS.md
+## Step 0 — Detect Project State & Bootstrap copilot-instructions.md
 
 Before doing anything else, determine whether the project is configured for Ralph.
 
-### 0a. Read AGENTS.md
+### 0a. Read copilot-instructions.md
 
-Read `AGENTS.md` from the project root. If it doesn't exist, check for `.github/copilot-instructions.md` as a fallback.
+Read `.github/copilot-instructions.md`. If it doesn't exist, fall back to `AGENTS.md` in the project root.
 
-If neither file exists, create `AGENTS.md` from the template at the end of this section.
+If neither file exists, create `.github/copilot-instructions.md` from the template at the end of this section.
 
 ### 0b. Check for unconfigured sentinel
 
@@ -82,9 +82,47 @@ Look for the sentinel comment on line 1:
 <!-- ⚠️ UNCONFIGURED: Replace all TODO markers below with your project's actual values -->
 ```
 
-If the sentinel is **absent**, `AGENTS.md` is already configured → skip to the Codebase Research Checklist.
+If the sentinel is **absent**, the config file is already configured → proceed to **Step 0b2** to check for missing sections.
 
-If the sentinel is **present**, proceed to classification.
+If the sentinel is **present**, proceed to classification (Step 0c).
+
+### 0b2. Validate required sections (configured files)
+
+Even when the file is configured, it may be missing Ralph-specific sections — for example, a project that already had a `copilot-instructions.md` before adopting Ralph. Check for these required sections:
+
+| Section | Purpose | Add if missing? |
+|---------|---------|-----------------|
+| `## Preflight` | Commands the Coder runs before marking any task complete | **Yes — required** |
+| `## Notes for AI Agents` | Ralph-specific workflow rules (preflight mandate, commit conventions, branch management) | **Yes — required** |
+| `## Project Context` | Tech stack metadata | No — optional, but prompt user if absent and stack is detectable |
+| `## Coding Standards` | Style rules | No — optional |
+| `## Conventions` | Commit/branch/test conventions | No — optional |
+
+**For each missing required section**, append it silently with sensible defaults:
+
+```markdown
+## Preflight
+
+```bash
+# TODO: Replace with your project's actual preflight command
+echo "❌ Configure preflight in .github/copilot-instructions.md" && exit 1
+```
+```
+
+```markdown
+## Notes for AI Agents
+
+- Always run preflight before marking a task complete
+- Follow existing patterns in the codebase — don't introduce new frameworks or libraries without explicit approval
+- When unsure about architecture, read `02.plan.md` in the current PRD folder
+- Commit after each completed task with a conventional commit message
+- Ralph commits on whichever branch you are on — check out the correct branch before starting the loop
+```
+
+If `## Preflight` was missing or still contains the placeholder `exit 1`, note it to the user:
+> ⚠️ Your `.github/copilot-instructions.md` doesn't have a preflight command configured. Ralph will skip preflight checks until you add one. You can set it now, or the auto-detect step below may be able to suggest one.
+
+After patching any missing sections, proceed to the Codebase Research Checklist.
 
 ### 0c. Classify the project
 
@@ -146,10 +184,10 @@ I detected the following project configuration:
 - **Package manager**: pnpm
 - **Preflight command**: `pnpm run lint && pnpm run typecheck && pnpm run test`
 
-Should I update AGENTS.md with these values? You can also correct anything above.
+Should I update `.github/copilot-instructions.md` with these values? You can also correct anything above.
 ```
 
-After the user confirms (or provides corrections), replace the sentinel and TODO markers in `AGENTS.md` with the confirmed values. Remove the sentinel comment from line 1.
+After the user confirms (or provides corrections), replace the sentinel and TODO markers in `.github/copilot-instructions.md` with the confirmed values. Remove the sentinel comment from line 1.
 
 ### 0e. Bootstrap (greenfield)
 
@@ -177,7 +215,7 @@ This appears to be a new project without existing source code. Before I can crea
    (e.g., Vitest, Jest, pytest, go test — or "no preference")
 ```
 
-After the user responds, populate `AGENTS.md` with the provided values and remove the sentinel.
+After the user responds, populate `.github/copilot-instructions.md` with the provided values and remove the sentinel.
 
 Set the preflight command to a working placeholder until real tooling is configured:
 
@@ -185,7 +223,7 @@ Set the preflight command to a working placeholder until real tooling is configu
 echo "⚠️ Preflight placeholder — configure real commands after project scaffolding"
 ```
 
-**Important for greenfield plans:** Ensure Phase 1 of the generated plan includes project scaffolding — initializing the project, setting up the directory structure, configuring the build tool, and getting a basic lint + typecheck + test pipeline running. Update the preflight command in `AGENTS.md` as the last task in Phase 1.
+**Important for greenfield plans:** Ensure Phase 1 of the generated plan includes project scaffolding — initializing the project, setting up the directory structure, configuring the build tool, and getting a basic lint + typecheck + test pipeline running. Update the preflight command in `.github/copilot-instructions.md` as the last task in Phase 1.
 
 ---
 
@@ -194,7 +232,7 @@ echo "⚠️ Preflight placeholder — configure real commands after project sca
 Before generating any artifacts, gather this context:
 
 - [ ] Read the full PRD
-- [ ] Read `AGENTS.md` (should now be configured after Step 0)
+- [ ] Read `.github/copilot-instructions.md` (should now be configured after Step 0)
 - [ ] Identify the tech stack (languages, frameworks, build tools)
 - [ ] Map the project directory structure
 - [ ] Find existing code related to the feature
