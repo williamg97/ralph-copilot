@@ -9,19 +9,19 @@ Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a featur
 ## Pipeline
 
 ```
-┌─────────┐     ┌──────────────────┐     ┌─────────────────────────────────┐
-│   PRD   │ ──▶ │ Ralph Plan       │ ──▶ │ Ralph Loop                      │
-│  Agent  │     │ Mode             │     │ (orchestration + implementation) │
-└─────────┘     └──────────────────┘     └─────────────────────────────────┘
- Generates       Decomposes PRD into      Iterates through tasks with
- requirements    spec + plan + tasks      Coder / Inspector / Journey QA
+┌─────────┐     ┌──────────────────┐     ┌─────────────────────────────────┐     ┌─────────────────┐
+│   PRD   │ ──▶ │ Ralph Plan       │ ──▶ │ Ralph Loop                      │ ──▶ │ Ralph Archive   │
+│  Agent  │     │ Mode             │     │ (orchestration + implementation) │     │ (optional)      │
+└─────────┘     └──────────────────┘     └─────────────────────────────────┘     └─────────────────┘
+ Generates       Decomposes PRD into      Iterates through tasks with             Moves completed
+ requirements    spec + plan + tasks      Coder / Inspector / Journey QA          feature to _archive/
 ```
 
 ### Stage 1: PRD Agent (`prd`)
 Generates a Product Requirements Document from a feature description. Detects the project state (greenfield vs existing codebase) to ask better clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
 
 ### Stage 2: Ralph Plan Mode (`ralph-plan`)
-Detects whether `.github/copilot-instructions.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Then takes a PRD and decomposes it into:
+Detects whether `.github/copilot-instructions.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Warns if completed features in `tasks/` haven't been archived yet. Then takes a PRD and decomposes it into:
 - **`01.specification.md`** — Technical specification with detailed requirements
 - **`02.plan.md`** — Phased implementation plan with dependency ordering
 - **`03-tasks-*.md`** — Individual task files with acceptance criteria
@@ -39,6 +39,9 @@ The orchestrator never writes application code — it only dispatches subagents 
 Supports two modes:
 - **Auto** — Runs through all tasks autonomously
 - **HITL (Human-in-the-Loop)** — Pauses at phase boundaries for human validation
+
+### Stage 4: Ralph Archive (`ralph-archive`) — optional
+Moves a completed feature folder from `tasks/{feature}/` to `tasks/_archive/{feature}/`. Validates that all tasks are ✅ before archiving (warns if incomplete). Available via the **Archive Feature** handoff at loop exit or the `/ralph-archive` slash command at any time.
 
 ## Setup
 
