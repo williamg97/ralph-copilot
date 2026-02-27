@@ -237,19 +237,19 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 
 | | snarktank/ralph | anthropics/ralph-wiggum | ralph-copilot (this project) |
 |---|---|---|---|
-| **Target** | Amp CLI / Claude Code | Claude Code (plugin) | VS Code Copilot (agent mode) |
-| **Loop mechanism** | External bash script (`ralph.sh`) spawning fresh instances | Stop hook intercepting session exit | In-process orchestration via Copilot subagents |
-| **Context model** | Fresh context per iteration — memory via git + `progress.txt` | Persistent session — files and git survive between iterations | Persistent session — shared context within Copilot chat |
-| **Task format** | `prd.json` (JSON with `passes: true/false` per story) | Free-form prompt text | Structured markdown files (`03-tasks-*.md`) grouped by phase |
-| **Stop condition** | `<promise>COMPLETE</promise>` in output | `--completion-promise` flag with `<promise>` tag | All tasks ✅ in `PROGRESS.md` + Journey Verifier PASS |
-| **Agent count** | 1 (single agent does everything) | 1 (single agent loop) | 5 (orchestrator + 4 specialized subagents) |
+| **Target** | Amp CLI / Claude Code (+ Claude Code marketplace plugin) | Claude Code (plugin) | VS Code Copilot (agent mode) |
+| **Loop mechanism** | External bash script (`ralph.sh`) spawning fresh instances per iteration | Stop hook intercepting session exit; prompt replayed automatically | In-process orchestration via Copilot subagents |
+| **Context model** | Fresh context per iteration — memory via git + `progress.txt` + `prd.json`; Amp supports auto-handoff when context fills up | Persistent session — files and git survive between iterations; prompt never changes | Persistent session — shared context within Copilot chat |
+| **Task format** | `prd.json` (JSON with `passes: true/false` per story) | Free-form prompt text (user-structured) | Structured markdown files (`03-tasks-*.md`) grouped by phase |
+| **Stop condition** | `<promise>COMPLETE</promise>` in output | `--completion-promise` flag with exact string match | All tasks ✅ in `PROGRESS.md` + Journey Verifier PASS |
+| **Agent count** | 1 (single agent does everything) | 1 (single agent loop) | 4 pipeline agents (PRD, Plan, Loop, Archive) + 4 specialized subagents within the loop |
 
 ### Planning & Decomposition
 
 | | snarktank/ralph | anthropics/ralph-wiggum | ralph-copilot |
 |---|---|---|---|
-| **PRD generation** | Skill-based PRD → saves markdown | None (user provides the prompt) | Dedicated PRD agent with clarifying questions and project-state detection |
-| **Plan decomposition** | Skill converts PRD to dependency-ordered JSON user stories (priority field guides execution order) | None — by design, the user structures work in their prompt | Dedicated plan agent producing specification + phased plan + individual task files + progress tracker |
+| **PRD generation** | Skill-based PRD → saves to `tasks/prd-{feature}.md` | None (user provides the prompt) | Dedicated PRD agent with clarifying questions and project-state detection |
+| **Plan decomposition** | Skill converts PRD to dependency-ordered JSON user stories (priority field guides execution order) | None — by design, the user structures work in their prompt; phases can be described but aren't enforced | Dedicated plan agent producing specification + phased plan + individual task files + progress tracker |
 | **Task granularity** | Flat list of user stories ordered by priority | Single prompt covering all work | Hierarchical: phases → tasks → acceptance criteria, with dependency tracking and file-level guidance |
 | **Tech stack detection** | Manual `AGENTS.md` / `CLAUDE.md` setup | None | Auto-detects from manifest files (`package.json`, `Cargo.toml`, etc.) and offers to populate `.github/copilot-instructions.md` |
 
@@ -260,7 +260,7 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 | **QA tiers** | 1 (coding agent runs quality checks) | 1 (self-correction via tests/linters) | 4 (Coder preflight → Task Inspector → Phase Inspector → Journey Verifier) |
 | **Dedicated inspector** | No — same agent implements and verifies | No — same agent self-corrects | Yes — separate Task Inspector and Phase Inspector subagents review each task and phase independently |
 | **Reachability audits** | Runtime browser verification via `dev-browser` skill (UI only) | Not built in | Static code analysis verifying features are wired into entry points (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries) — does not start the application or verify at runtime |
-| **Circuit breaker** | Max iterations on the bash loop | `--max-iterations` flag | Auto-pause (`PAUSE.md`) after 3 consecutive inspection failures on the same task |
+| **Circuit breaker** | Max iterations on the bash loop (default: 10) | `--max-iterations` flag (default: unlimited) | Auto-pause (`PAUSE.md`) after 3 consecutive inspection failures on the same task |
 | **Browser verification** | `dev-browser` skill for runtime visual UI checks (loads pages, interacts with UI, takes screenshots) | Not built in | Static reachability analysis only; runtime browser tooling is a [backlog item](TODO.md) |
 
 ### Orchestration & Control
@@ -274,15 +274,15 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 | **Task selection** | Agent picks highest-priority `passes: false` story | Agent decides what to work on | Coder subagent autonomously selects (orchestrator forbidden from recommending) |
 | **Commit strategy** | One commit per story | Up to the agent | `git commit --amend` for rework iterations; conventional commits for new tasks |
 | **Knowledge transfer** | `progress.txt` Codebase Patterns section + per-directory `AGENTS.md` updates | File changes persist in session | `## Learnings` section in `PROGRESS.md` passed to subsequent coder iterations |
-| **Archiving** | Automatic archive when branch changes | Not built in | Manual via `/ralph-archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
+| **Archiving** | Automatic — archives to `archive/YYYY-MM-DD-feature/` when branch changes | Not built in | Manual via `/ralph-archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
 
 ### Trade-offs
 
 - **Token usage** — The multi-agent approach with 4 QA tiers consumes roughly 4–6x more tokens per feature than snarktank/ralph and ~20x more than ralph-wiggum. Each task requires at minimum 2 subagent calls (coder + task inspector), with additional phase inspector calls at boundaries and a journey verifier call at the end. Subagent instruction files are re-read from disk every iteration, further increasing per-iteration cost.
-- **No fresh context** — snarktank/ralph's fresh-instance-per-iteration model avoids context window exhaustion on large projects. ralph-copilot runs within a single Copilot session, which can hit context limits on long runs.
+- **No fresh context** — snarktank/ralph's fresh-instance-per-iteration model avoids context window exhaustion on large projects. Amp's auto-handoff feature (`autoHandoff` at 90% context) further mitigates this. ralph-copilot runs within a single Copilot session, which can hit context limits on long runs.
 - **No runtime browser verification** — snarktank/ralph includes a `dev-browser` skill that actually loads pages and interacts with UI at runtime. ralph-copilot's reachability audits are static code analysis only — they trace routes and exports by reading source files but never start the application. This means ralph-copilot can miss runtime errors, broken pages, or import cycles that snarktank/ralph would catch. Concrete browser tooling is a [backlog item](TODO.md).
-- **No archiving** — snarktank/ralph auto-archives completed runs when the branch changes. ralph-copilot supports manual archiving via the `/ralph-archive` command or **Archive Feature** handoff — completed feature folders are moved to `tasks/_archive/`. The plan agent also warns when completed features haven't been archived yet.
-- **Platform lock-in** — snarktank/ralph works with Amp and Claude Code; ralph-wiggum works with Claude Code. ralph-copilot requires VS Code with GitHub Copilot agent mode.
+- **Manual archiving** — snarktank/ralph auto-archives to `archive/YYYY-MM-DD-feature/` whenever the branch changes. ralph-copilot requires the user to explicitly run `/ralph-archive` or use the **Archive Feature** handoff — but the plan agent warns about stale completed features to prompt archiving.
+- **Platform lock-in** — snarktank/ralph works with Amp and Claude Code (including marketplace plugin support); ralph-wiggum works with Claude Code. ralph-copilot requires VS Code with GitHub Copilot agent mode.
 
 ## Acknowledgements
 
