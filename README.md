@@ -205,7 +205,7 @@ After completing each task, the Coder subagent records any reusable patterns, go
 
 ## Comparison with Other Ralph Implementations
 
-This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://ghuntley.com/ralph/)) for VS Code Copilot. Below is a comparison with [snarktank/ralph](https://github.com/snarktank/ralph) (the original open-source implementation for Amp / Claude Code) and [anthropics/ralph-wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) (the official Claude Code plugin).
+This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](https://ghuntley.com/ralph/)) but has diverged significantly — adding multi-agent orchestration, phased execution with enforced boundaries, a four-tier QA pipeline, structured planning, and feature archiving. The core loop-until-done idea remains, but the architecture and quality model are substantially different. Below is a comparison with [snarktank/ralph](https://github.com/snarktank/ralph) (the original open-source implementation for Amp / Claude Code) and [anthropics/ralph-wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) (the official Claude Code plugin).
 
 ### Architecture
 
