@@ -122,7 +122,22 @@ echo "❌ Configure preflight in .github/copilot-instructions.md" && exit 1
 If `## Preflight` was missing or still contains the placeholder `exit 1`, note it to the user:
 > ⚠️ Your `.github/copilot-instructions.md` doesn't have a preflight command configured. Ralph will skip preflight checks until you add one. You can set it now, or the auto-detect step below may be able to suggest one.
 
-After patching any missing sections, proceed to the Codebase Research Checklist.
+After patching any missing sections, proceed to **Step 0b3** to check for stale features.
+
+### 0b3. Check for stale features (archived warning)
+
+Scan `tasks/` for feature directories (excluding `_archive/`). For each directory that contains a `PROGRESS.md`, read its **Completion Summary** section.
+
+If any feature folder has ALL tasks marked ✅ Completed (i.e., `Remaining: 0` and `Incomplete: 0`):
+- Warn the user:
+  > ⚠️ Found completed feature(s) in `tasks/` that could be archived:
+  > - `tasks/{feature-name}/` — all {N} tasks completed
+  >
+  > Run `/ralph-archive` or use the **Archive Feature** handoff from the Ralph loop to move these to `tasks/_archive/`.
+
+- **Do NOT block or auto-archive** — this is informational only. Continue with planning regardless.
+
+After the stale check, proceed to the Codebase Research Checklist.
 
 ### 0c. Classify the project
 

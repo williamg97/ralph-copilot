@@ -13,6 +13,10 @@ handoffs:
     agent: ralph-loop
     prompt: "Start or continue the Ralph loop with HITL enabled. Read the progress file first. When a phase completes, the Phase Inspector generates a validation report and PAUSEs for human approval before proceeding to the next phase."
     send: true
+  - label: Archive Feature
+    agent: ralph-archive
+    prompt: "Archive the completed feature folder. Move it from tasks/{feature}/ to tasks/_archive/{feature}/."
+    send: false
 ---
 
 # Ralph Is A Loop ("Ralph Wiggum" Implementation Agent for VS Code Copilot)
@@ -379,6 +383,10 @@ When complete:
 - Output a concise success message
 - Mention where the artifacts live and that all tasks are completed
 - Note that Consumer Journey Verification passed (all features are reachable by consumers)
+- Remind the user they can archive the feature folder when ready:
+  > Use the **Archive Feature** handoff button or run `/ralph-archive` to move this feature's
+  > task folder to `tasks/_archive/`. You can do this now or later — archiving is optional
+  > and won't affect the implementation.
 
 ## Adjusting PRDs Mid-Flight
 

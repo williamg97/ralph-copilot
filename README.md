@@ -51,6 +51,7 @@ your-project/
 ├── .github/
 │   ├── agents/                      # Custom agents (auto-detected by Copilot)
 │   │   ├── prd.agent.md
+│   │   ├── ralph-archive.agent.md
 │   │   ├── ralph-plan.agent.md
 │   │   ├── ralph.agent.md
 │   │   └── instructions/            # Extracted subagent instruction files
@@ -59,9 +60,10 @@ your-project/
 │   │       ├── phase-inspector.md
 │   │       └── journey-verifier.md
 │   ├── copilot-instructions.md      # ← customize this (project config + preflight)
-│   └── prompts/                     # Slash commands (/prd, /plan)
+│   └── prompts/                     # Slash commands (/prd, /plan, /ralph-archive)
 │       ├── plan.prompt.md
-│       └── prd.prompt.md
+│       ├── prd.prompt.md
+│       └── ralph-archive.prompt.md
 └── ...
 ```
 
@@ -120,10 +122,12 @@ Open the Chat view (`Ctrl+Alt+I`) and select an agent from the dropdown:
 | **prd** | Generate a PRD from a feature description |
 | **ralph-plan** | Decompose a PRD into spec/plan/tasks |
 | **ralph-loop** | Execute the implementation loop |
+| **ralph-archive** | Archive a completed feature folder to `tasks/_archive/` |
 
 Or use prompt commands:
 - `/prd` — Quick PRD generation
 - `/plan` — Quick plan decomposition
+- `/ralph-archive` — Archive a completed feature folder
 
 ### Typical Workflow
 
@@ -135,16 +139,19 @@ Or use prompt commands:
 
 ```
 tasks/
-└── my-feature/
-    ├── prd.md                       # Product Requirements Document
-    ├── 01.specification.md          # Technical specification
-    ├── 02.plan.md                   # Implementation plan
-    ├── 03-tasks-phase1-01.md        # Task files (one per task)
-    ├── 03-tasks-phase1-02.md
-    ├── 03-tasks-phase2-03.md
-    ├── 03-tasks-phase2-04.md
-    ├── PROGRESS.md                  # Progress tracker
-    └── PAUSE.md                     # (optional) Halts the loop
+├── my-feature/
+│   ├── prd.md                       # Product Requirements Document
+│   ├── 01.specification.md          # Technical specification
+│   ├── 02.plan.md                   # Implementation plan
+│   ├── 03-tasks-phase1-01.md        # Task files (one per task)
+│   ├── 03-tasks-phase1-02.md
+│   ├── 03-tasks-phase2-03.md
+│   ├── 03-tasks-phase2-04.md
+│   ├── PROGRESS.md                  # Progress tracker
+│   └── PAUSE.md                     # (optional) Halts the loop
+└── _archive/                        # Archived completed features
+    └── old-feature/
+        └── ...
 ```
 
 ## Controlling the Loop
@@ -238,7 +245,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 | **Task selection** | Agent picks highest-priority `passes: false` story | Agent decides what to work on | Coder subagent autonomously selects (orchestrator forbidden from recommending) |
 | **Commit strategy** | One commit per story | Up to the agent | `git commit --amend` for rework iterations; conventional commits for new tasks |
 | **Knowledge transfer** | `progress.txt` Codebase Patterns section + per-directory `AGENTS.md` updates | File changes persist in session | `## Learnings` section in `PROGRESS.md` passed to subsequent coder iterations |
-| **Archiving** | Automatic archive when branch changes | Not built in | [Backlog item](TODO.md) |
+| **Archiving** | Automatic archive when branch changes | Not built in | Manual via `/archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
 
 ### Key Enhancements in ralph-copilot
 
@@ -267,7 +274,7 @@ This project adapts the Ralph pattern (originated by [Geoffrey Huntley](https://
 - **Token usage** — The multi-agent approach with 4 QA tiers consumes roughly 4–6x more tokens per feature than snarktank/ralph and ~20x more than ralph-wiggum. Each task requires at minimum 2 subagent calls (coder + task inspector), with additional phase inspector calls at boundaries and a journey verifier call at the end. Subagent instruction files are re-read from disk every iteration, further increasing per-iteration cost.
 - **No fresh context** — snarktank/ralph's fresh-instance-per-iteration model avoids context window exhaustion on large projects. ralph-copilot runs within a single Copilot session, which can hit context limits on long runs.
 - **No runtime browser verification** — snarktank/ralph includes a `dev-browser` skill that actually loads pages and interacts with UI at runtime. ralph-copilot's reachability audits are static code analysis only — they trace routes and exports by reading source files but never start the application. This means ralph-copilot can miss runtime errors, broken pages, or import cycles that snarktank/ralph would catch. Concrete browser tooling is a [backlog item](TODO.md).
-- **No archiving** — snarktank/ralph auto-archives completed runs when the branch changes. ralph-copilot does not yet have this ([backlog](TODO.md)).
+- **No archiving** — snarktank/ralph auto-archives completed runs when the branch changes. ralph-copilot supports manual archiving via the `/ralph-archive` command or **Archive Feature** handoff — completed feature folders are moved to `tasks/_archive/`. The plan agent also warns when completed features haven't been archived yet.
 - **Platform lock-in** — snarktank/ralph works with Amp and Claude Code; ralph-wiggum works with Claude Code. ralph-copilot requires VS Code with GitHub Copilot agent mode.
 
 ## Acknowledgements
