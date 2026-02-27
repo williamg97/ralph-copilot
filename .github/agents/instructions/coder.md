@@ -43,7 +43,7 @@ yourself and independently decide which task to work on based on the priority ru
 7. Implement the selected task end-to-end, including tests and documentation required by the task.
    - **Wiring check**: If this task adds consumer-facing features (UI components, pages, API endpoints, CLI commands, library exports), verify they are reachable through the appropriate entry point — not just implemented in isolation. For UI: navigation/routing. For APIs: endpoint registration. For CLIs: command registration. For libraries: public exports. If wiring is missing, add it as part of this task.
 
-8. **Before marking complete**, run the preflight checks described in AGENTS.md and fix any issues until they pass. Common commands: `just preflight`, `just sct`, `make checks`, or whatever is configured for this project.
+8. **Before marking complete**, run the preflight checks described in `.github/copilot-instructions.md` and fix any issues until they pass. Common commands: `just preflight`, `just sct`, `make checks`, or whatever is configured for this project.
    - **If the configured package manager is unavailable** (e.g., `pnpm` not found), try alternatives: use `npm` or `npx` instead, or install dependencies with whatever is available. Do NOT ask the user — solve it.
    - **If preflight cannot run at all** after trying alternatives, note the specific blocker in the commit message and in the `## Learnings` section of `PROGRESS.md`, then proceed to mark the task complete. The Task Inspector will catch real issues.
 

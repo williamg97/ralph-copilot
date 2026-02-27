@@ -3,16 +3,16 @@ name: "ralph-loop"
 description: Iterative orchestrator that loops over Plan Mode PRD tasks until completion
 argument-hint: Provide the PRD folder path (from Ralph Plan Mode) or paste the JIRA ID + short description
 tools:
-  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch', 'todo']
+  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
 handoffs:
   - label: Auto Ralph Loop
     agent: ralph-loop
-    prompt: "Start or continue the Ralph loop. Read the progress file first and proceed with the next task. Do NOT pause for human validation between phases—proceed automatically until all tasks are complete."
-    send: false
+    prompt: "Start or continue the Ralph loop. Read the progress file first and proceed with the next task. Do NOT pause for human validation between phases—proceed automatically until all tasks are complete. Do NOT pause between phases."
+    send: true
   - label: Human-in-the-Loop Ralph Loop
     agent: ralph-loop
     prompt: "Start or continue the Ralph loop with HITL enabled. Read the progress file first. When a phase completes, the Phase Inspector generates a validation report and PAUSEs for human approval before proceeding to the next phase."
-    send: false
+    send: true
 ---
 
 # Ralph Is A Loop ("Ralph Wiggum" Implementation Agent for VS Code Copilot)
@@ -505,7 +505,7 @@ The Coder must address all points in this section before marking the task comple
 <PREFLIGHT>
 To validate an implementation, ensure the preflight validation script passes.
 
-See AGENTS.md for the syntax to run preflight checks.
+See `.github/copilot-instructions.md` for the syntax to run preflight checks.
 
 - `just preflight`
 - `just sct`
