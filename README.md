@@ -2,7 +2,7 @@
 
 > **🚧 Work in Progress** — Agent instructions, QA tiers, and loop behavior may change between versions.
 
-> **⚠️ Token Usage:** A full pipeline run consumes roughly **4–6x** the tokens of single-agent Ralph implementations. Use a strong model (Claude Opus 4.6 etc) for **PRD, and Plan** agents where reasoning quality matters. Use a cheaper model (GPT-5 mini, etc.) for the **Ralph loop agent** where most tokens are spent, since the orchestration and inspection tasks are more about structured execution than deep reasoning.
+> **⚠️ Token Usage:** A full pipeline run consumes roughly **4–6x** the tokens of single-agent Ralph implementations. Use a strong model (Claude Opus 4.6 etc) for **PRD, and Plan** agents where reasoning quality matters. Use a cheaper model for the **Ralph loop agent** where most tokens are spent, since the orchestration and inspection tasks are more about structured execution than deep reasoning.
 
 This project was originally inspired by the [Ralph pattern](https://ghuntley.com/ralph/) and [snarktank/ralph](https://github.com/snarktank/ralph), but has diverged significantly — adding multi-agent orchestration with strict role separation, a four-tier QA pipeline, phased execution with enforced boundaries, structured planning, and native VS Code integration. At this point it shares the name and the loop-until-done philosophy, but little else. See the [comparison tables](#comparison-with-other-ralph-implementations) below for a detailed breakdown.
 
