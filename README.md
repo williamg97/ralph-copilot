@@ -2,9 +2,11 @@
 
 > **🚧 Work in Progress** — Agent instructions, QA tiers, and loop behavior may change between versions.
 
-> **⚠️ Token Usage:** A full pipeline run consumes roughly **4–6x** the tokens of single-agent Ralph implementations. Use a strong model (Claude Sonnet 4, GPT-4.1) for **PRD, Plan, and Coder** stages where reasoning quality matters. Use a cheaper model (GPT-4.1 mini, etc.) for the **orchestrator and inspectors**, which only read state and review code.
+> **⚠️ Token Usage:** A full pipeline run consumes roughly **4–6x** the tokens of single-agent Ralph implementations. Use a strong model (Claude Opus 4.6 etc) for **PRD, Plan, and Coder** stages where reasoning quality matters. Use a cheaper model (GPT-5 mini, etc.) for the **orchestrator and inspectors**, which only read state and review code.
 
-Ralph is a three-stage AI agent pipeline for VS Code Copilot that takes a feature idea from requirements through to a fully implemented solution with quality gates.
+This project was originally inspired by the [Ralph pattern](https://ghuntley.com/ralph/) and [snarktank/ralph](https://github.com/snarktank/ralph), but has diverged significantly — adding multi-agent orchestration with strict role separation, a four-tier QA pipeline, phased execution with enforced boundaries, structured planning, and native VS Code integration. At this point it shares the name and the loop-until-done philosophy, but little else. See the [comparison tables](#comparison-with-other-ralph-implementations) below for a detailed breakdown.
+
+Ralph is a multi-stage AI agent pipeline for VS Code Copilot that takes a feature idea from requirements through to a fully implemented solution with quality gates.
 
 ## Pipeline
 
