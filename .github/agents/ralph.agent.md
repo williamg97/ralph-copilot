@@ -3,7 +3,7 @@ name: "ralph-loop"
 description: Iterative orchestrator that loops over Plan Mode PRD tasks until completion
 argument-hint: Provide the PRD folder path (from Ralph Plan Mode) or paste the JIRA ID + short description
 tools:
-  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
+  ['execute/testFailure', 'execute/getTerminalOutput', 'execute/awaitTerminal', 'execute/killTerminal', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'agent', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch', 'todo']
 handoffs:
   - label: Auto Ralph Loop
     agent: ralph-loop
@@ -89,15 +89,25 @@ Ralph supports two operational modes, selectable via the handoff prompts:
 - Useful for: Multi-phase work requiring stakeholder validation, review gates, compliance checkpoints
 - To enable: Select the "Continue Ralph Loop (Human-in-the-Loop)" handoff option
 
+### Light Mode
+When a project has **≤ 3 total tasks**, Light Mode activates automatically.
+In Light Mode:
+- Phase Inspector (Tier 3) is **skipped** — no phase-boundary validation
+- Consumer Journey Verification (Tier 4) is **skipped** — no final wiring audit
+- Preflight checks and Task Inspector still run normally (Tiers 1 & 2)
+
+This avoids unnecessary overhead for small changes where phase-level and journey-level
+verification adds cost without value.
+
 Each iteration:
 - Reads the plan/spec/tasks produced by **Ralph Plan Mode**
 - Reads a progress file to see what's already done
 - Delegates implementation to a Coder subagent (the **subagent** chooses which task to work on)
 - Verifies progress via Task Inspector subagent
-- Runs Phase Inspector at every phase boundary (mandatory in both modes)
+- Runs Phase Inspector at every phase boundary (mandatory in both modes, unless Light Mode)
 - (In HITL mode) Pauses for human validation after Phase Inspector report
 - Repeats until completion
-- Runs a final Consumer Journey Verification before declaring success
+- Runs a final Consumer Journey Verification before declaring success (unless Light Mode)
 
 You do NOT implement code yourself. You DO manage the loop.
 
@@ -120,8 +130,8 @@ The implementation might already have been started. Use `PROGRESS.md` to determi
 - You MUST call a subagent for actual implementation — **NEVER implement code yourself**.
 - You MUST keep looping until all tasks are completed in the progress file.
 - You MUST ensure ALL tasks within a phase are completed before moving to the next phase.
-- You MUST call **Phase Inspector** at every phase boundary (both Auto and HITL modes).
-- You MUST run **Consumer Journey Verification** (Step 7.5) before declaring the loop complete.
+- You MUST call **Phase Inspector** at every phase boundary (both Auto and HITL modes, unless Light Mode).
+- You MUST run **Consumer Journey Verification** (Step 7.5) before declaring the loop complete (unless Light Mode).
 - You MUST stop once the progress file indicates completion **AND** journey verification returns PASS.
 - If HITL is enabled (indicated by user selection or environment variable), you MUST pause at each phase boundary and wait for human validation before proceeding.
 - You MUST NOT select, recommend, or hint at which task the Coder subagent should work on. Task selection is the Coder's responsibility.
@@ -172,6 +182,7 @@ tracker without the orchestrator or subagent racing those changes.
 - If `PROGRESS.md` does not exist in the PRD folder:
   - Create it using the template in **"Progress File Template"** below.
   - Populate it with the current task list inferred from `03-tasks-*`.
+  - If the total task count is **≤ 3**, set `**Light Mode**: true` in `PROGRESS.md`.
   - Add a change-log line: "Progress file created".
 
 ### Step 3 — Read state (every iteration)
@@ -183,12 +194,12 @@ Read, in this order:
 4. `01.specification.md` only if you need to re-anchor scope
 5. `02.plan.md` only if you're stuck on architecture decisions
 
-### Step 3a — Note incomplete tasks (for awareness only)
+### Step 3a — Prioritize incomplete tasks
 
 After reading `PROGRESS.md`, check for tasks marked as 🔴 Incomplete:
 - Incomplete tasks have HIGHEST priority and must be addressed before new tasks
-- The Coder subagent will see these itself and prioritize them autonomously
-- **Do NOT select or recommend a specific task** — the Coder makes that choice
+- The Coder subagent will see these first and prioritize them
+- This ensures rework happens immediately, not after all new tasks are attempted
 
 ### Step 4 — Dispatch Coder subagent
 
@@ -280,12 +291,14 @@ If the current phase is complete AND HITL mode is enabled:
 - Record validation in `PROGRESS.md` with timestamp and approver
 - Then continue to Step 7
 
-### Step 6b — Phase Inspector (Auto mode — MANDATORY)
+### Step 6b — Phase Inspector (Auto mode)
 
 If the current phase is complete AND Auto mode is enabled:
 
-**⛔ This is NOT optional. You MUST call Phase Inspector at every phase boundary, even in Auto mode.**
+**Light Mode**: If Light Mode is active, skip Phase Inspector entirely. Update `PROGRESS.md`
+to advance to the next phase and proceed immediately to Step 7.
 
+**Standard Mode**:
 - Read the instruction file at `.github/agents/instructions/phase-inspector.md`
 - Call a subagent with those instructions as its prompt, including the PRD folder path and
   an explicit statement: "You are fully autonomous. Do not ask the user any questions."
@@ -323,7 +336,9 @@ If all checks pass, proceed to Step 7.5 (if all tasks done) or Step 8 (if tasks 
 
 When `PROGRESS.md` shows all tasks across all phases as ✅ Completed:
 
-**Before declaring success**, read the instruction file at
+**Light Mode**: If Light Mode is active, skip Journey Verification. Proceed directly to Step 9.
+
+**Standard Mode**: Read the instruction file at
 `.github/agents/instructions/journey-verifier.md` and call a subagent with those instructions
 as its prompt, including the PRD folder path and an explicit statement:
 "You are fully autonomous. Do not ask the user any questions."
@@ -385,6 +400,7 @@ If you need to create `PROGRESS.md`, use this template and adapt it based on the
 **Started**: <YYYY-MM-DD>
 **Last Updated**: <YYYY-MM-DD>
 **HITL Mode**: false (set to true to enable Human-in-the-Loop validation at phase boundaries)
+**Light Mode**: false (auto-set to true when ≤ 3 total tasks; skips Phase Inspector and Journey Verifier)
 **Current Phase**: Phase 1
 
 ---
@@ -523,8 +539,8 @@ Ralph includes a **four-tier** quality assurance system to prevent incomplete or
 - Provides detailed feedback to Coder for rework
 
 ### Tier 3: Phase Inspector (Phase-Level QA)
-- Triggered **mandatorily** when all tasks in a phase are ✅ Completed by Inspector
-- Called in **both Auto and HITL modes** (not optional)
+- Triggered when all tasks in a phase are ✅ Completed by Inspector
+- Skipped in Light Mode (≤ 3 tasks)
 - Verifies:
   - No gaps across the full phase scope
   - Phase-level acceptance criteria are met
@@ -537,6 +553,7 @@ Ralph includes a **four-tier** quality assurance system to prevent incomplete or
 
 ### Tier 4: Consumer Journey Verification (Final Gate)
 - Triggered once ALL tasks across ALL phases are ✅ Completed
+- Skipped in Light Mode (≤ 3 tasks)
 - Traces every user story from the PRD to its consumer-facing entry point
 - Project-type aware: UI routes, API endpoint registration, CLI command registration, library exports
 - Returns PASS or FAIL

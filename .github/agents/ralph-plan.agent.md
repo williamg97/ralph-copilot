@@ -40,8 +40,6 @@ If no PRD is available, tell the user to run the PRD agent first or paste their 
 
 All artifacts are written into a single folder. If the PRD is at `tasks/{feature-name}/prd.md`, write alongside it. If starting from scratch, create `tasks/{feature-name}/`.
 
-You will generate these files (in order):
-
 | File | Purpose |
 |------|---------|
 | `01.specification.md` | Technical specification expanded from PRD |
@@ -49,128 +47,259 @@ You will generate these files (in order):
 | `03-tasks-phase{N}-{NN}.md` | One file per task, grouped by phase |
 | `PROGRESS.md` | Progress tracker for Ralph loop |
 
-## Your Workflow
+---
 
-### Step 0 — Detect project state & bootstrap AGENTS.md
+## The Job
 
-Before planning, ensure the project is configured. Follow the **Step 0** instructions in the plan skill — this detects whether `AGENTS.md` is unconfigured, auto-detects the tech stack from manifest files for existing projects (or asks the user for greenfield projects), and populates `AGENTS.md` with confirmed values.
+1. Detect project state & ensure `AGENTS.md` is configured
+2. Receive a PRD (from file or handoff)
+3. Research the existing codebase for context
+4. Generate `01.specification.md` — technical spec
+5. Generate `02.plan.md` — phased implementation plan
+6. Generate `03-tasks-phase{N}-{NN}.md` — one file per task
+7. Generate `PROGRESS.md` — progress tracker
+8. Present summary for human review
 
-Do NOT proceed to planning if `AGENTS.md` is still unconfigured — the plan quality depends on knowing the tech stack, conventions, and preflight commands.
+**Important:** Do NOT implement any code. Only produce planning artifacts.
 
-### Step 1 — Understand the codebase
+---
 
-Before planning anything, gather context:
+## Step 0 — Detect Project State & Bootstrap AGENTS.md
 
-1. Read the PRD fully
-2. Read `AGENTS.md` (should now be configured after Step 0)
-3. Search the codebase to understand:
-   - Project structure and architecture
-   - Existing patterns and conventions
-   - Relevant existing code that relates to the PRD
-   - Test patterns in use
-   - Build/lint/test tooling
-4. Identify dependencies between PRD user stories
+Before doing anything else, determine whether the project is configured for Ralph.
 
-### Step 2 — Generate `01.specification.md`
+### 0a. Read AGENTS.md
 
-Create a technical specification that expands the PRD into implementation-ready detail:
+Read `AGENTS.md` from the project root. If it doesn't exist, check for `.github/copilot-instructions.md` as a fallback.
+
+If neither file exists, create `AGENTS.md` from the template at the end of this section.
+
+### 0b. Check for unconfigured sentinel
+
+Look for the sentinel comment on line 1:
+
+```
+<!-- ⚠️ UNCONFIGURED: Replace all TODO markers below with your project's actual values -->
+```
+
+If the sentinel is **absent**, `AGENTS.md` is already configured → skip to the Codebase Research Checklist.
+
+If the sentinel is **present**, proceed to classification.
+
+### 0c. Classify the project
+
+Scan the project root and immediate subdirectories for source code signals:
+
+| Signal | Indicates |
+|--------|-----------|
+| `package.json`, `node_modules/` | Node.js / JavaScript / TypeScript |
+| `Cargo.toml` | Rust |
+| `pyproject.toml`, `setup.py`, `requirements.txt` | Python |
+| `go.mod` | Go |
+| `*.sln`, `*.csproj` | .NET / C# |
+| `pom.xml`, `build.gradle` | Java / Kotlin |
+| `Gemfile` | Ruby |
+| `src/`, `lib/`, `app/`, `cmd/` | Existing source directories |
+| `.github/workflows/`, `Makefile`, `justfile` | CI / build tooling |
+
+**Greenfield** = sentinel present + no manifest files + no meaningful source directories (only `.github/`, config files, docs)
+
+**Brownfield-unconfigured** = sentinel present + manifest files or source directories exist
+
+### 0d. Auto-detect (brownfield-unconfigured)
+
+Read discovered manifest files to extract project configuration:
+
+**From `package.json`:**
+- `name` → project name
+- `dependencies` / `devDependencies` → framework (react, next, express, fastify, etc.), test runner (vitest, jest, mocha), build tool (vite, webpack, esbuild, tsc)
+- `scripts` → preflight candidates (look for `lint`, `typecheck`, `test`, `check`, `build`)
+- `packageManager` field or lock files (`pnpm-lock.yaml` → pnpm, `yarn.lock` → yarn, `package-lock.json` → npm)
+
+**From `pyproject.toml`:**
+- `[tool.poetry]` or `[project]` → framework, dependencies
+- `[tool.pytest]` → pytest for testing
+- `[tool.ruff]` or `[tool.black]` → linter/formatter
+
+**From `Cargo.toml`:**
+- `[dependencies]` → framework (actix-web, axum, rocket, etc.)
+- Preflight: `cargo clippy && cargo test`
+
+**From `go.mod`:**
+- `module` → module path
+- Preflight: `go vet ./... && go test ./...`
+
+**Also check for:**
+- `Makefile` → look for `lint`, `test`, `check` targets
+- `justfile` → look for `preflight`, `check`, `lint`, `test` recipes
+- `.github/workflows/*.yml` → look for CI steps that run tests/lint
+
+Present the detected values to the user:
+
+```
+I detected the following project configuration:
+
+- **Language/Runtime**: TypeScript / Node.js 20
+- **Framework**: Next.js 14
+- **Testing**: Vitest
+- **Build tool**: Vite
+- **Package manager**: pnpm
+- **Preflight command**: `pnpm run lint && pnpm run typecheck && pnpm run test`
+
+Should I update AGENTS.md with these values? You can also correct anything above.
+```
+
+After the user confirms (or provides corrections), replace the sentinel and TODO markers in `AGENTS.md` with the confirmed values. Remove the sentinel comment from line 1.
+
+### 0e. Bootstrap (greenfield)
+
+Ask the user key questions before proceeding:
+
+```
+This appears to be a new project without existing source code. Before I can create a good plan, I need to know:
+
+1. What language/runtime will you use?
+   A. TypeScript / Node.js
+   B. Python
+   C. Go
+   D. Rust
+
+2. What type of project is this?
+   A. Web app (frontend + backend)
+   B. API / backend service
+   C. CLI tool
+   D. Library / package
+
+3. Do you have a preferred framework?
+   (e.g., Next.js, Express, FastAPI, Axum — or "no preference")
+
+4. Do you have a preferred test runner?
+   (e.g., Vitest, Jest, pytest, go test — or "no preference")
+```
+
+After the user responds, populate `AGENTS.md` with the provided values and remove the sentinel.
+
+Set the preflight command to a working placeholder until real tooling is configured:
+
+```bash
+echo "⚠️ Preflight placeholder — configure real commands after project scaffolding"
+```
+
+**Important for greenfield plans:** Ensure Phase 1 of the generated plan includes project scaffolding — initializing the project, setting up the directory structure, configuring the build tool, and getting a basic lint + typecheck + test pipeline running. Update the preflight command in `AGENTS.md` as the last task in Phase 1.
+
+---
+
+## Codebase Research Checklist
+
+Before generating any artifacts, gather this context:
+
+- [ ] Read the full PRD
+- [ ] Read `AGENTS.md` (should now be configured after Step 0)
+- [ ] Identify the tech stack (languages, frameworks, build tools)
+- [ ] Map the project directory structure
+- [ ] Find existing code related to the feature
+- [ ] Identify test patterns (framework, file naming, coverage approach)
+- [ ] Identify existing components/utilities that can be reused
+- [ ] Note any CI/CD or build constraints
+
+---
+
+## Specification Template (`01.specification.md`)
 
 ```markdown
 # Specification: {Feature Name}
 
 ## Overview
-Brief technical summary of what will be built and why.
+Brief technical summary of what will be built.
 
 ## Source PRD
-Link or reference to the original PRD file.
+`tasks/{feature-name}/prd.md`
 
 ## Technical Context
-- Current architecture relevant to this feature
-- Existing code/components that will be modified or reused
-- Key technical constraints
+- Relevant architecture description
+- Existing code/components to modify or reuse
+- Technical constraints or dependencies
 
 ## Detailed Requirements
 
-### SR-001: {Requirement Title}
-**From**: US-001 / FR-1
-**Description**: Technical description of what must be implemented.
+### SR-001: {Title}
+**From**: US-001, FR-1
+**Description**: What must be implemented, technically.
 **Acceptance Criteria**:
-- [ ] Specific, testable criterion
-- [ ] Another criterion
+- [ ] Testable criterion
 **Files to Modify/Create**:
-- `path/to/file.ts` — description of changes
-**Dependencies**: SR-002 (must be done first)
+- `path/to/file` — changes needed
+**Dependencies**: None | SR-XXX
 **Complexity**: Low | Medium | High
 
-### SR-002: {Requirement Title}
-...
+## API Changes
+(if applicable — new/modified endpoints, request/response schemas)
 
-## API Changes (if applicable)
-- New endpoints, modified signatures, schema changes
+## Data Model Changes
+(if applicable — new tables, columns, migrations)
 
-## Data Model Changes (if applicable)
-- New tables/columns, migrations needed
-
-## Non-Goals (from PRD)
-Carried forward from PRD to prevent scope creep.
+## Non-Goals
+(carried forward from PRD)
 ```
 
-Each specification requirement (SR-*) should map back to PRD user stories (US-*) and functional requirements (FR-*). Group related items — a single SR can cover multiple related FRs.
+### Specification Guidelines
 
-### Step 3 — Generate `02.plan.md`
+- Each SR should map to one or more PRD user stories (US-*) or functional requirements (FR-*)
+- Group related requirements — one SR can cover multiple FRs if they're tightly coupled
+- Be specific about files to modify — the coder shouldn't have to search
+- Complexity ratings: **Low** = straightforward, known pattern; **Medium** = requires some design decisions; **High** = significant new code or complex logic
+- Always include non-goals to prevent scope creep
 
-Create an implementation plan that organizes work into phases:
+---
+
+## Plan Template (`02.plan.md`)
 
 ```markdown
 # Implementation Plan: {Feature Name}
 
 ## Architecture Overview
-How the feature fits into the existing system. Include a brief description of the approach.
+How this feature fits into the existing system.
 
 ## Phase Breakdown
 
-### Phase 1: {Phase Name} (e.g., "Core Workflow End-to-End")
-**Goal**: What this phase delivers as a usable, testable increment.
+### Phase 1: {Name} (e.g., "Core Workflow")
+**Goal**: What this phase delivers.
 **Tasks**:
-1. Task 01 — {title} (SR-001) [Complexity: Low]
-2. Task 02 — {title} (SR-002) [Complexity: Medium]
+1. Task 01 — {title} (SR-001) [Low]
+2. Task 02 — {title} (SR-002) [Medium]
 **Phase Exit Criteria**:
-- [ ] Core workflow is functional and reachable through its entry point
-- [ ] Tests pass for all new functionality
+- [ ] Core workflow functional and reachable through its entry point
 
-### Phase 2: {Phase Name} (e.g., "Advanced Features")
+### Phase 2: {Name} (e.g., "Advanced Features")
 **Goal**: ...
 **Tasks**:
-3. Task 03 — {title} (SR-003) [Complexity: Medium]
-4. Task 04 — {title} (SR-004) [Complexity: High]
+3. Task 03 — {title} (SR-003) [Medium]
 **Phase Exit Criteria**:
 - [ ] New features functional and tested
-- [ ] Integration with Phase 1 verified
-
-### Phase 3: {Phase Name} (e.g., "Polish & Hardening")
-...
 
 ## Dependency Graph
-Describe or list task dependencies so the executor knows what order is safe.
+Which tasks depend on which others.
 
-## Risk & Considerations
-- Known risks or areas of uncertainty
-- Decisions deferred to implementation
+## Risks & Considerations
+Known unknowns and deferred decisions.
 ```
 
-**Phase design principles:**
-- **Vertical slices over horizontal layers**: Each phase should deliver a usable, testable increment — not just one layer. Avoid deferring all wiring/integration to the last phase. For backend/library projects, each phase should deliver a working endpoint, command, or importable module.
-- Keep phases to 2-5 tasks each. More than 5 tasks per phase means the phase is too large — split it
-- Total tasks for a typical feature: 4-12. Larger features: up to 20
-- Any phase that introduces consumer-facing features must include a task that wires them into the appropriate entry point (UI routes, API registration, CLI commands, library exports)
+### Phase Design Rules
 
-### Step 4 — Generate task files
+1. **Vertical slices over horizontal layers**: For projects with a user-facing layer (UI, CLI, API consumers), each phase SHOULD deliver a vertical slice — data + logic + consumer-facing wiring. Avoid the anti-pattern of "Foundation → Core logic → Integration → UI/polish" where all wiring is deferred to the last phase. For purely backend/library projects, phases should still deliver testable, demonstrable increments (e.g., callable API endpoint, working CLI command, importable module with tests).
+2. **Size**: 2-5 tasks per phase. If >5, split the phase.
+3. **Increment**: Each phase MUST produce a testable, demonstrable increment. For UI projects: something a user can navigate to and interact with. For backend/API projects: a working endpoint, service, or module with integration tests. For libraries/CLIs: a callable interface with documented usage.
+4. **Exit criteria**: Should be verifiable. For UI projects, include reachability ("user can navigate to feature X"). For backend projects, include integration criteria ("endpoint responds correctly", "CLI command produces expected output", "module is importable and tested").
+5. **Total scope**: 4-12 tasks for a typical feature. 12-20 for large features. If >20, the PRD scope is too large — suggest splitting.
+6. **Wiring task**: Any phase that introduces consumer-facing features MUST include a task that wires them into the appropriate entry points — UI navigation/routing for frontend apps, route registration for APIs, command registration for CLIs, public exports for libraries. This ensures nothing is built but unreachable.
 
-Create one file per task, named `03-tasks-phase{N}-{NN}.md`:
+---
 
-Example: `03-tasks-phase1-01.md`, `03-tasks-phase1-02.md`, `03-tasks-phase2-03.md`
+## Task File Template (`03-tasks-phase{N}-{NN}.md`)
 
-Each task file follows this structure:
+Filename pattern: `03-tasks-phase1-01.md`, `03-tasks-phase1-02.md`, `03-tasks-phase2-03.md`
+
+Task numbers are globally unique and sequential across phases.
 
 ```markdown
 # Task {NN}: {Title}
@@ -178,57 +307,57 @@ Each task file follows this structure:
 **Phase**: {N} — {Phase Name}
 **Specification Refs**: SR-001, SR-002
 **Complexity**: Low | Medium | High
-**Dependencies**: Task 01 (must be complete first)
+**Dependencies**: Task 01 | None
 
 ## Description
 
-Clear description of what needs to be implemented. Include enough context that a
-senior engineer who hasn't read the full spec can understand the task.
+Clear description of what to implement. A senior engineer unfamiliar with the
+spec should be able to understand the scope from this section alone.
 
 ## Acceptance Criteria
 
-- [ ] Specific, testable criterion derived from specification
+- [ ] Specific, verifiable criterion
 - [ ] Another criterion
-- [ ] Unit tests cover the new functionality
+- [ ] Unit tests added covering new functionality
 - [ ] Typecheck / lint passes
 - [ ] Preflight checks pass
 
 ## Files to Create or Modify
 
-- `path/to/file.ts` — what changes are needed and why
-- `path/to/test.ts` — test file to create
+- `path/to/file.ext` — what to change and why
+- `path/to/test.ext` — test file to create or update
 
 ## Implementation Notes
 
-Any guidance on approach, patterns to follow, existing code to reference, or
-gotchas to watch out for. Keep this practical — the coder agent will read this.
+Practical guidance: patterns to follow, existing code to reference, edge cases
+to handle, gotchas, or relevant documentation links.
 ```
 
-**Task design principles:**
-- Each task should be completable in a single focused session (one Coder subagent call)
-- Tasks must have clear, verifiable acceptance criteria — no vague "works correctly"
-- Always include a criterion for tests and preflight passing
-- List specific files to modify so the coder doesn't have to hunt
-- Include project-type-appropriate verification criteria:
-  - **UI tasks**: "Verify visually in browser"
-  - **API tasks**: "Endpoint responds correctly to requests"
-  - **CLI tasks**: "Command produces expected output"
-  - **Library tasks**: "Module is importable and documented"
-- Any task adding consumer-facing features must include an acceptance criterion verifying the feature is reachable through its entry point — not just implemented in isolation
+### Task Design Rules
 
-### Step 5 — Generate `PROGRESS.md`
+1. **One session**: Each task should be completable by one coder agent call (15-60 min of focused work)
+2. **Verifiable**: Every acceptance criterion must be testable — no "works correctly"
+3. **Self-contained context**: Include enough detail that the coder doesn't need to read the full spec to start
+4. **Always require tests**: Include "Unit tests added" and "Preflight passes" as criteria
+5. **File-explicit**: List exact files to create/modify — this dramatically improves coder accuracy
+6. **Verification criteria**: For UI changes, include "Verify visually in browser." For API changes, include "Endpoint responds correctly." For CLI changes, include "Command produces expected output." For library changes, include "Module is importable and documented."
+7. **No orphans**: Every task must trace back to at least one specification requirement (SR-*)
+8. **Wiring required**: Any task that adds consumer-facing features MUST include an acceptance criterion verifying the feature is reachable through its intended entry point. For UI apps: "Feature is reachable by a user through the application's existing navigation/routing." For APIs: "Endpoint is registered and responds to requests." For CLIs: "Command is registered and documented in help output." For libraries: "Module is exported and importable." Do not accept "component renders in isolation" or "unit tests pass" as sole proof of completion.
 
-Create the progress tracker using the template that Ralph expects. Populate it with all tasks from Step 4.
+---
 
-Use this exact structure:
+## Progress File Template (`PROGRESS.md`)
+
+Use the Ralph-compatible format:
 
 ```markdown
 # Progress Tracker: {Feature Name}
 
-**Epic**: {JIRA ID or feature name}
+**Epic**: {identifier}
 **Started**: {YYYY-MM-DD}
 **Last Updated**: {YYYY-MM-DD}
 **HITL Mode**: false
+**Light Mode**: false
 **Current Phase**: Phase 1
 
 ---
@@ -241,15 +370,6 @@ Use this exact structure:
 |------|-------|--------|-----------------|
 | 01 | {title} | ⬜ Not Started | |
 | 02 | {title} | ⬜ Not Started | |
-
-**Phase Status**: ⬜ Not Started
-
-### Phase 2: {Phase Name}
-
-| Task | Title | Status | Inspector Notes |
-|------|-------|--------|-----------------|
-| 03 | {title} | ⬜ Not Started | |
-| 04 | {title} | ⬜ Not Started | |
 
 **Phase Status**: ⬜ Not Started
 
@@ -280,7 +400,6 @@ Use this exact structure:
 | Phase | Completed | Phase Inspector Report | Validated By | Validation Date | Status |
 |-------|-----------|------------------------|--------------|-----------------|--------|
 | Phase 1 | ⬜ | (pending) | (pending) | (pending) | Not Started |
-| Phase 2 | ⬜ | (pending) | (pending) | (pending) | Not Started |
 
 ---
 
@@ -297,7 +416,28 @@ Use this exact structure:
 | {YYYY-MM-DD} | - | Progress file created | Ralph Plan Mode | Initial setup from PRD decomposition |
 ```
 
-### Step 6 — Present summary for review
+If total task count is **≤ 3**, set `**Light Mode**: true` in the generated `PROGRESS.md`.
+
+---
+
+## Traceability Matrix
+
+Every artifact should trace back to the PRD:
+
+```
+PRD User Story (US-001) → Spec Requirement (SR-001) → Plan Task (Task 01) → Task File (03-tasks-phase1-01.md) → PROGRESS.md row
+```
+
+Before finalizing, verify:
+- [ ] Every US from the PRD has at least one SR
+- [ ] Every SR maps to at least one task
+- [ ] Every task has a task file with clear acceptance criteria
+- [ ] PROGRESS.md includes all tasks
+- [ ] Phase ordering respects dependencies
+
+---
+
+## Final Step — Present summary for review
 
 After generating all artifacts, present a concise summary to the user:
 
@@ -312,6 +452,8 @@ Then offer the handoff buttons:
 - **Start Ralph Loop (Auto)** — for autonomous execution
 - **Start Ralph Loop (HITL)** — for phase-gated execution with human validation
 
+---
+
 ## Quality Guidelines
 
 - **Map everything back**: Every task must trace to specification requirements, which trace to PRD user stories. No orphan tasks.
@@ -321,6 +463,22 @@ Then offer the handoff buttons:
 - **Don't over-plan**: If something is uncertain, note it in "Implementation Notes" and let the coder figure it out. Don't try to write pseudo-code in the plan.
 - **Respect existing patterns**: Plans should follow the project's existing architecture and conventions, not introduce new patterns unnecessarily.
 
-## Reading the plan skill
+---
 
-For detailed templates and decomposition guidelines, read the full plan skill instructions: [Plan Decomposition Skill](../skills/plan/SKILL.md)
+## Checklist
+
+Before presenting the plan to the user:
+
+- [ ] Codebase research was done (not just reading the PRD)
+- [ ] Specification maps all PRD requirements
+- [ ] Plan has well-sized phases (2-5 tasks each)
+- [ ] Each phase delivers a demonstrable increment (vertical slice for UI apps; working endpoint/command/module for backend)
+- [ ] Every phase with consumer-facing features includes a wiring/integration task ensuring features are reachable (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries)
+- [ ] Task files are specific enough for a coder to implement
+- [ ] Acceptance criteria are verifiable, not vague
+- [ ] Consumer-facing tasks include reachability criteria appropriate to the project type (UI: "accessible from navigation"; API: "endpoint registered and responding"; CLI: "command registered and documented"; Library: "exported and importable")
+- [ ] Every task lists specific files to modify
+- [ ] Dependencies between tasks are documented
+- [ ] PROGRESS.md is populated and correctly formatted
+- [ ] Total task count is reasonable (4-20)
+- [ ] Summary is ready for human review
