@@ -76,11 +76,15 @@ Ralph uses a single **`.github/copilot-instructions.md`** file for all configura
 
 `.github/copilot-instructions.md` is **natively auto-loaded** by VS Code Copilot ([docs](https://code.visualstudio.com/docs/copilot/customization/custom-instructions#_use-a-githubcopilot-instructionsmd-file)), so its contents are included in every chat request with no extra setup.
 
-You can configure it in two ways:
+**If your project already has a `.github/copilot-instructions.md`**, Ralph will use it as-is — it won't overwrite your existing configuration. The plan agent will check for any missing Ralph-specific sections (`## Preflight`, `## Notes for AI Agents`) and silently append them if needed, leaving your existing content untouched.
 
-**Option A: Let the agents detect it.** If you leave `.github/copilot-instructions.md` unconfigured (with its `TODO` markers), the plan agent will auto-detect your tech stack from manifest files (`package.json`, `Cargo.toml`, etc.) and offer to populate it before planning. The PRD agent also adapts its questions based on detected project state.
+The plan agent handles three scenarios automatically:
 
-**Option B: Fill it in manually.** Open `.github/copilot-instructions.md` and replace the `TODO` markers with your project's values:
+- **Existing project with configured file** — Uses your file, patches in any missing Ralph sections, and proceeds to planning.
+- **Existing project without configuration (brownfield)** — Detects your tech stack from manifest files (`package.json`, `Cargo.toml`, `pyproject.toml`, etc.) and offers to populate the file before planning. The PRD agent also adapts its questions based on detected project state.
+- **New project with no source code (greenfield)** — Asks you about language, framework, and project type, then populates the file. Ensures Phase 1 of the generated plan includes project scaffolding and build tooling setup.
+
+You can also configure it manually at any time — open `.github/copilot-instructions.md` and replace the `TODO` markers with your project's values:
 
 ```markdown
 ## Preflight
