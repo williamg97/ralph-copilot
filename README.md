@@ -207,6 +207,28 @@ After completing each task, the Coder subagent records any reusable patterns, go
 - VS Code with GitHub Copilot (agent mode)
 - Custom agents support (VS Code 1.106+)
 
+## Key Enhancements
+
+1. **Multi-agent architecture** — Separating orchestration, coding, and inspection into distinct subagents prevents the common failure mode where a single agent marks its own work as complete without proper verification.
+
+2. **Phased execution with enforced boundaries** — Instead of a flat story list, work is organized into phases with exit criteria. Phase Inspector validates cross-task integration at each boundary before proceeding, catching issues that per-task checks miss.
+
+3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. Tiers 2–4 are static code analysis (reading source files to trace routes, exports, and registrations) rather than runtime verification. This addresses the common AI-agent failure mode of building features that pass unit tests but aren't wired into the application, though it cannot catch runtime errors that snarktank/ralph's `dev-browser` skill would.
+
+4. **Structured planning stage** — The plan agent produces a technical specification, phased implementation plan, and individual task files with file-level guidance. snarktank/ralph converts PRDs to a flat JSON story list with dependency-aware priority ordering. ralph-wiggum has no planning stage by design — it delegates task structure entirely to the user's prompt, trading planning overhead for simplicity.
+
+5. **Human-in-the-loop mode** — Built-in HITL support with validation pauses at phase boundaries, useful for work requiring stakeholder review or compliance gates.
+
+6. **Project-type-aware reachability audits** — Verification checks adapt to the project type (UI navigation, API endpoint mounting, CLI command registration, library public exports) across all QA tiers.
+
+7. **Auto-detection of project configuration** — Reads manifest files to detect the tech stack and pre-populate `.github/copilot-instructions.md`, reducing manual setup compared to snarktank/ralph's manual configuration.
+
+8. **Pause/resume mechanism** — `PAUSE.md` allows safely editing task files or the progress tracker mid-flight without racing the loop, more granular than killing a bash process.
+
+9. **Circuit breaker with structured feedback** — After 3 consecutive inspection failures, the loop auto-pauses with specific feedback rather than silently consuming iterations. Inspector feedback is prepended to task files so the coder sees exactly what failed.
+
+10. **Native VS Code integration** — Runs entirely within VS Code Copilot's agent mode with handoffs between agents, rather than requiring a terminal, external bash scripts, or Claude Code plugins.
+
 ## Comparison with Other Ralph Implementations
 
 This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](https://ghuntley.com/ralph/)) but has diverged significantly — adding multi-agent orchestration, phased execution with enforced boundaries, a four-tier QA pipeline, structured planning, and feature archiving. The core loop-until-done idea remains, but the architecture and quality model are substantially different. Below is a comparison with [snarktank/ralph](https://github.com/snarktank/ralph) (the original open-source implementation for Amp / Claude Code) and [anthropics/ralph-wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) (the official Claude Code plugin).
@@ -252,29 +274,7 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 | **Task selection** | Agent picks highest-priority `passes: false` story | Agent decides what to work on | Coder subagent autonomously selects (orchestrator forbidden from recommending) |
 | **Commit strategy** | One commit per story | Up to the agent | `git commit --amend` for rework iterations; conventional commits for new tasks |
 | **Knowledge transfer** | `progress.txt` Codebase Patterns section + per-directory `AGENTS.md` updates | File changes persist in session | `## Learnings` section in `PROGRESS.md` passed to subsequent coder iterations |
-| **Archiving** | Automatic archive when branch changes | Not built in | Manual via `/archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
-
-### Key Enhancements in ralph-copilot
-
-1. **Multi-agent architecture** — Separating orchestration, coding, and inspection into distinct subagents prevents the common failure mode where a single agent marks its own work as complete without proper verification.
-
-2. **Phased execution with enforced boundaries** — Instead of a flat story list, work is organized into phases with exit criteria. Phase Inspector validates cross-task integration at each boundary before proceeding, catching issues that per-task checks miss.
-
-3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. Tiers 2–4 are static code analysis (reading source files to trace routes, exports, and registrations) rather than runtime verification. This addresses the common AI-agent failure mode of building features that pass unit tests but aren't wired into the application, though it cannot catch runtime errors that snarktank/ralph's `dev-browser` skill would.
-
-4. **Structured planning stage** — The plan agent produces a technical specification, phased implementation plan, and individual task files with file-level guidance. snarktank/ralph converts PRDs to a flat JSON story list with dependency-aware priority ordering. ralph-wiggum has no planning stage by design — it delegates task structure entirely to the user's prompt, trading planning overhead for simplicity.
-
-5. **Human-in-the-loop mode** — Built-in HITL support with validation pauses at phase boundaries, useful for work requiring stakeholder review or compliance gates.
-
-6. **Project-type-aware reachability audits** — Verification checks adapt to the project type (UI navigation, API endpoint mounting, CLI command registration, library public exports) across all QA tiers.
-
-7. **Auto-detection of project configuration** — Reads manifest files to detect the tech stack and pre-populate `.github/copilot-instructions.md`, reducing manual setup compared to snarktank/ralph's manual configuration.
-
-8. **Pause/resume mechanism** — `PAUSE.md` allows safely editing task files or the progress tracker mid-flight without racing the loop, more granular than killing a bash process.
-
-9. **Circuit breaker with structured feedback** — After 3 consecutive inspection failures, the loop auto-pauses with specific feedback rather than silently consuming iterations. Inspector feedback is prepended to task files so the coder sees exactly what failed.
-
-10. **Native VS Code integration** — Runs entirely within VS Code Copilot's agent mode with handoffs between agents, rather than requiring a terminal, external bash scripts, or Claude Code plugins.
+| **Archiving** | Automatic archive when branch changes | Not built in | Manual via `/ralph-archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
 
 ### Trade-offs
 
