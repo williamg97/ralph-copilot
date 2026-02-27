@@ -291,3 +291,4 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 - Based on [snarktank/ralph](https://github.com/snarktank/ralph/tree/main) — the original Ralph agent pipeline
 - Plugin reference: [anthropics/ralph-wiggum](https://github.com/anthropics/claude-code/tree/main/plugins/ralph-wiggum) — Claude Code's official Ralph plugin
 - Original concept by [Geoffrey Huntley](https://ghuntley.com/ralph/)
+- Inspired by gist from [@gsemet](https://gist.github.com/gsemet)
