@@ -44,34 +44,6 @@ Supports two modes:
 
 ### 1. Install
 
-Run the installer from your project's root directory. It downloads the latest Ralph agent files into `.github/` and creates a template `AGENTS.md`.
-
-**macOS / Linux:**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.sh | bash -s --
-```
-
-**Windows (PowerShell):**
-
-```powershell
-irm https://raw.githubusercontent.com/williamg97/ralph-copilot/main/install.ps1 | iex
-```
-
-**Options:**
-
-| Flag | Description |
-|------|-------------|
-| `--branch <ref>` / `-Branch <ref>` | Install from a specific branch, tag, or SHA (default: `main`) |
-| `--force` / `-Force` | Overwrite `AGENTS.md` even if it already exists |
-
-**Updating:** Re-run the same command. It overwrites `.github/` files with the latest versions but preserves your customized `AGENTS.md`.
-
-**Authentication:** The scripts auto-detect credentials from `GITHUB_TOKEN`, `GH_TOKEN`, the `gh` CLI, or git's credential helper. For private repos, ensure one of these is configured.
-
-<details>
-<summary><strong>Manual install</strong></summary>
-
 Copy the `.github/` folder and `AGENTS.md` into your project's root:
 
 ```
@@ -86,19 +58,12 @@ your-project/
 │   │       ├── task-inspector.md
 │   │       ├── phase-inspector.md
 │   │       └── journey-verifier.md
-│   ├── prompts/                     # Slash commands (/prd, /plan)
-│   │   ├── plan.prompt.md
-│   │   └── prd.prompt.md
-│   └── skills/                      # On-demand skill instructions
-│       ├── plan/
-│       │   └── SKILL.md
-│       └── prd/
-│           └── SKILL.md
+│   └── prompts/                     # Slash commands (/prd, /plan)
+│       ├── plan.prompt.md
+│       └── prd.prompt.md
 ├── AGENTS.md                        # ← customize this (project config + preflight)
 └── ...
 ```
-
-</details>
 
 ### 2. Configure project context
 
