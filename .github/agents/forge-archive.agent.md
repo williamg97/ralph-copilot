@@ -1,5 +1,5 @@
 ---
-name: "ralph-archive"
+name: "forge-archive"
 description: "Archive a completed feature's task folder to tasks/_archive/"
 argument-hint: Provide the feature folder path (e.g., tasks/my-feature)
 tools:

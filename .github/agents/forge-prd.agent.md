@@ -1,11 +1,11 @@
 ---
-name: prd
+name: forge-prd
 description: "Generate a Product Requirements Document (PRD) for a new feature. Asks clarifying questions, then produces a structured PRD."
 tools:
   ['read/readFile', 'edit/createDirectory', 'edit/createFile', 'edit/editFiles', 'search', 'web/fetch']
 handoffs:
   - label: Decompose into Plan
-    agent: ralph-plan
+    agent: forge-plan
     prompt: "Take the PRD that was just generated and decompose it into a technical specification, implementation plan, and phased task files. The PRD folder path will be in the conversation above."
     send: false
 ---

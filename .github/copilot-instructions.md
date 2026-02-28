@@ -3,7 +3,7 @@
 # Project Agent Configuration
 
 This file is auto-loaded by VS Code Copilot. It provides project-specific context for all AI
-interactions, including the Ralph agent pipeline.
+interactions, including the Forge agent pipeline.
 
 ## Preflight
 
@@ -61,4 +61,4 @@ docs/          # Documentation
 - Follow existing patterns in the codebase — don't introduce new frameworks or libraries without explicit approval
 - When unsure about architecture, read `02.plan.md` in the current PRD folder
 - Commit after each completed task with a conventional commit message
-- Ralph commits on whichever branch you are on — check out the correct branch before starting the loop
+- Forge commits on whichever branch you are on — check out the correct branch before starting the loop

@@ -30,7 +30,7 @@ yourself and independently decide which task to work on based on the priority ru
 
 2. Read `PROGRESS.md` to understand what is done, what remains, and the **current phase**. Also read the `## Learnings` section — these are discoveries from previous coder iterations that may affect your work.
 
-3. **Commit on the current branch.** Ralph does not manage branches — the user is responsible for being on the correct branch before starting the loop.
+3. **Commit on the current branch.** Forge does not manage branches — the user is responsible for being on the correct branch before starting the loop.
 
 4. **IMPORTANT — Check for 🔴 Incomplete tasks first.** If any exist in the current phase, pick ONE Incomplete task as your highest priority. These represent rework flagged by the Task Inspector and MUST be addressed before any new work.
 
