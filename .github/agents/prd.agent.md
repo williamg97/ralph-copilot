@@ -22,9 +22,10 @@ After saving, offer the **"Decompose into Plan"** handoff so the user can procee
 
 1. Detect project state for context-aware questions
 2. Receive a feature description from the user
-3. Ask 3-5 essential clarifying questions (with lettered options)
-4. Generate a structured PRD based on answers
-5. Save to `tasks/[feature-name]/prd.md` (create the folder if needed)
+3. Assess feature complexity to determine interview depth
+4. Ask clarifying questions (depth scales with complexity)
+5. Generate a structured PRD based on answers
+6. Save to `tasks/[feature-name]/prd.md` (create the folder if needed)
 
 ---
 
@@ -97,9 +98,36 @@ After the PRD is saved, if `.github/copilot-instructions.md` was unconfigured, a
 
 ---
 
-## Step 1: Clarifying Questions
+## Step 1: Assess Complexity & Ask Clarifying Questions
 
-Ask only critical questions where the initial prompt is ambiguous. Focus on:
+Before asking questions, assess the feature's complexity to determine interview depth.
+
+### Complexity Assessment
+
+Evaluate the feature description against these signals:
+
+| Signal | Points toward **Deep** |
+|--------|------------------------|
+| Touches multiple systems or modules | ✓ |
+| Requires new data models or schema changes | ✓ |
+| Has user-facing UI + backend + data layer | ✓ |
+| Involves authentication, authorization, or security | ✓ |
+| Integrates with external APIs or services | ✓ |
+| Ambiguous scope — could mean many things | ✓ |
+| Significant state management or complex workflows | ✓ |
+
+| Signal | Points toward **Light** |
+|--------|-------------------------|
+| Single-module change (e.g., add a field, tweak a component) | ✓ |
+| Well-defined scope with obvious implementation path | ✓ |
+| Bug fix or refactor with clear boundaries | ✓ |
+| Similar to existing features already in the codebase | ✓ |
+
+**Decision rule**: If 3+ "Deep" signals apply, use deep interview. Otherwise, use light interview. Use your judgment — when in doubt, go light and let the user add more context.
+
+### Light Interview (default — 3-5 questions)
+
+For straightforward features. Ask only critical questions where the initial prompt is ambiguous. Focus on:
 
 - **Problem/Goal:** What problem does this solve?
 - **Core Functionality:** What are the key actions?
@@ -129,6 +157,29 @@ Ask only critical questions where the initial prompt is ambiguous. Focus on:
 ```
 
 This lets users respond with "1A, 2C, 3B" for quick iteration. Remember to indent the options.
+
+### Deep Interview (complex features — 8-12 questions across 2 rounds)
+
+For features with significant ambiguity, multi-system scope, or architectural decisions.
+
+**Round 1 (6-8 questions):** Cover the same areas as the light interview plus:
+- **Integration points**: What existing systems does this touch?
+- **Data model**: What data needs to be stored, and where?
+- **Edge cases**: What happens when things go wrong?
+- **Security/Auth**: Who can access this? What permissions apply?
+- **Performance**: Are there volume/latency constraints?
+
+Present questions with lettered options (same format as light interview). Wait for answers.
+
+**Round 2 (3-5 follow-up questions):** Based on Round 1 answers:
+- Probe contradictions or gaps in the responses
+- Clarify technical trade-offs surfaced by their answers
+- Validate assumptions about existing code or architecture
+- Confirm edge case handling strategies
+
+Present follow-ups in a single message. Wait for answers before generating the PRD.
+
+**Important**: Do NOT announce "I'm using deep interview mode" — just ask the questions naturally. The user doesn't need to know about the internal complexity assessment.
 
 ---
 

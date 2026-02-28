@@ -42,6 +42,7 @@ All artifacts are written into a single folder. If the PRD is at `tasks/{feature
 
 | File | Purpose |
 |------|---------|
+| `00-context.md` | Shared project context for all coder subagents |
 | `01.specification.md` | Technical specification expanded from PRD |
 | `02.plan.md` | Architecture and implementation plan with phases |
 | `03-tasks-phase{N}-{NN}.md` | One file per task, grouped by phase |
@@ -54,11 +55,12 @@ All artifacts are written into a single folder. If the PRD is at `tasks/{feature
 1. Detect project state & ensure `.github/copilot-instructions.md` is configured
 2. Receive a PRD (from file or handoff)
 3. Research the existing codebase for context
-4. Generate `01.specification.md` — technical spec
-5. Generate `02.plan.md` — phased implementation plan
-6. Generate `03-tasks-phase{N}-{NN}.md` — one file per task
-7. Generate `PROGRESS.md` — progress tracker
-8. Present summary for human review
+4. Generate `00-context.md` — shared coder context
+5. Generate `01.specification.md` — technical spec
+6. Generate `02.plan.md` — phased implementation plan
+7. Generate `03-tasks-phase{N}-{NN}.md` — one file per task
+8. Generate `PROGRESS.md` — progress tracker (with seeded learnings)
+9. Present summary for human review
 
 **Important:** Do NOT implement any code. Only produce planning artifacts.
 
@@ -257,6 +259,61 @@ Before generating any artifacts, gather this context:
 
 ---
 
+## Shared Context File (`00-context.md`)
+
+This file is read by every Coder subagent before starting any task. It replaces the need to duplicate project conventions, architecture decisions, and utility references across every task file. Generate it from your codebase research findings.
+
+```markdown
+# Project Context
+
+Read this file before starting any task. It contains project-wide conventions,
+architecture decisions, and reusable patterns that apply to all tasks.
+
+## Tech Stack
+- **Language/Runtime**: {from copilot-instructions.md or detection}
+- **Framework**: {detected framework}
+- **Testing**: {test runner + patterns}
+- **Build tool**: {build tool}
+
+## Architecture Decisions
+- {Key decisions from the specification that affect multiple tasks}
+- {e.g., "State management uses Zustand stores in `src/stores/`"}
+- {e.g., "All DB access through Prisma — never raw SQL"}
+- {e.g., "API routes follow REST conventions with `/api/v1/` prefix"}
+
+## Existing Code to Reuse
+- `path/to/utility.ext` — {what it does, when to use it}
+- `path/to/component.ext` — {shared component, use instead of creating new}
+- `path/to/hook-or-helper.ext` — {pattern to follow}
+
+## Testing Patterns
+- Test framework: {vitest/jest/pytest/etc.}
+- Test file location: {co-located / separate `tests/` dir}
+- Mocking approach: {e.g., "use msw for API mocks", "use vitest.mock()"}
+- Test utilities: {e.g., "`tests/utils.tsx` exports `renderWithProviders()`"}
+
+## Conventions
+- {Import style: named exports, barrel files, etc.}
+- {Naming conventions: kebab-case files, PascalCase components, etc.}
+- {Error handling patterns}
+- {Any non-obvious codebase conventions discovered during research}
+
+## Gotchas
+- {Known quirks: e.g., "build requires `.env.local` with DATABASE_URL"}
+- {e.g., "Route registration is manual in `src/app/routes.ts`, not file-based"}
+- {e.g., "CSS modules are used — don't use global styles"}
+```
+
+### Context File Guidelines
+
+- **Only include genuinely reusable context** — don't dump the entire spec here
+- **Be specific about file paths** — coders should know exactly where to look
+- **Update during planning only** — the coder's `## Learnings` section in `PROGRESS.md` handles runtime discoveries
+- **Keep it concise** — target 40-80 lines. If it's longer, you're including too much task-specific detail
+- For **greenfield projects**, this file may be minimal (just tech stack + conventions). That's fine — it grows as learnings accumulate.
+
+---
+
 ## Specification Template (`01.specification.md`)
 
 ```markdown
@@ -419,10 +476,10 @@ Use the Ralph-compatible format:
 
 ### Phase 1: {Phase Name}
 
-| Task | Title | Status | Inspector Notes |
-|------|-------|--------|-----------------|
-| 01 | {title} | ⬜ Not Started | |
-| 02 | {title} | ⬜ Not Started | |
+| Task | Title | Status | Iterations | Inspector Notes |
+|------|-------|--------|------------|------------------|
+| 01 | {title} | ⬜ Not Started | 0 | |
+| 02 | {title} | ⬜ Not Started | 0 | |
 
 **Phase Status**: ⬜ Not Started
 
@@ -458,7 +515,13 @@ Use the Ralph-compatible format:
 
 ## Learnings
 
-<!-- Coder agents append reusable patterns, gotchas, and conventions discovered during implementation -->
+<!-- Seeded by Ralph Plan Mode from codebase research. Coder agents append additional discoveries during implementation. -->
+<!-- The orchestrator passes this section to every coder dispatch so knowledge accumulates across iterations. -->
+
+{Seed 3-5 initial learnings from your codebase research. Examples:}
+- {e.g., "This project uses `src/lib/db.ts` as the single Prisma client instance — import from there, don't create new clients"}
+- {e.g., "Tests use `@testing-library/react` with a custom `render()` wrapper in `tests/setup.tsx`"}
+- {e.g., "The `justfile` has a `preflight` recipe that runs lint + typecheck + test"}
 
 ---
 

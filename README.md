@@ -20,14 +20,15 @@ Ralph is a multi-stage AI agent pipeline for VS Code Copilot that takes a featur
 ```
 
 ### Stage 1: PRD Agent (`prd`)
-Generates a Product Requirements Document from a feature description. Detects the project state (greenfield vs existing codebase) to ask better clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria.
+Generates a Product Requirements Document from a feature description. Detects the project state (greenfield vs existing codebase) to ask better clarifying questions, then produces a structured PRD with user stories, functional requirements, and acceptance criteria. Automatically scales interview depth based on feature complexity — simple features get 3-5 quick questions, complex multi-system features get 8-12 questions across two rounds.
 
 ### Stage 2: Ralph Plan Mode (`ralph-plan`)
 Detects whether `.github/copilot-instructions.md` is configured — if not, auto-detects the tech stack from manifest files and offers to populate it. Warns if completed features in `tasks/` haven't been archived yet. Then takes a PRD and decomposes it into:
+- **`00-context.md`** — Shared project context for all coder subagents (conventions, architecture, utilities, testing patterns)
 - **`01.specification.md`** — Technical specification with detailed requirements
 - **`02.plan.md`** — Phased implementation plan with dependency ordering
 - **`03-tasks-*.md`** — Individual task files with acceptance criteria
-- **`PROGRESS.md`** — Progress tracker for the Ralph loop
+- **`PROGRESS.md`** — Progress tracker for the Ralph loop (with seeded learnings and iteration tracking)
 
 ### Stage 3: Ralph Loop (`ralph-loop`)
 Iteratively implements each task using subagents:
@@ -150,6 +151,7 @@ Or use prompt commands:
 tasks/
 ├── my-feature/
 │   ├── prd.md                       # Product Requirements Document
+│   ├── 00-context.md                # Shared project context for coders
 │   ├── 01.specification.md          # Technical specification
 │   ├── 02.plan.md                   # Implementation plan
 │   ├── 03-tasks-phase1-01.md        # Task files (one per task)
@@ -202,7 +204,7 @@ This prevents the common AI-agent failure mode where every unit test passes but 
 
 ### Knowledge Transfer
 
-After completing each task, the Coder subagent records any reusable patterns, gotchas, or conventions it discovered in the `## Learnings` section of `PROGRESS.md`. The orchestrator passes these learnings to subsequent coder iterations, so knowledge accumulates across the implementation loop — similar to the "Codebase Patterns" approach in [snarktank/ralph](https://github.com/snarktank/ralph).
+The plan agent seeds initial learnings from its codebase research into the `## Learnings` section of `PROGRESS.md`, and generates a `00-context.md` file containing project conventions, architecture decisions, testing patterns, and existing utilities. Every coder subagent reads `00-context.md` before starting any task, and the orchestrator passes the accumulated `## Learnings` to every coder dispatch. After completing each task, the Coder subagent records any new reusable patterns or gotchas it discovered, so knowledge compounds across the implementation loop — similar to the "Codebase Patterns" approach in [snarktank/ralph](https://github.com/snarktank/ralph).
 
 ## Requirements
 
@@ -230,6 +232,14 @@ After completing each task, the Coder subagent records any reusable patterns, go
 9. **Circuit breaker with structured feedback** — After 3 consecutive inspection failures, the loop auto-pauses with specific feedback rather than silently consuming iterations. Inspector feedback is prepended to task files so the coder sees exactly what failed.
 
 10. **Native VS Code integration** — Runs entirely within VS Code Copilot's agent mode with handoffs between agents, rather than requiring a terminal, external bash scripts, or Claude Code plugins.
+
+11. **Shared coder context (`00-context.md`)** — The plan agent generates a shared context file containing project conventions, architecture decisions, testing patterns, and existing utilities. Every coder subagent reads this before starting any task, ensuring consistent behavior without duplicating context across individual task files.
+
+12. **Adaptive interview depth** — The PRD agent automatically scales its questioning based on feature complexity. Simple features get 3-5 quick questions; complex multi-system features trigger 8-12 questions across two rounds to surface ambiguities, edge cases, and integration concerns before planning begins.
+
+13. **Iteration tracking** — `PROGRESS.md` tracks the number of coder attempts per task via an `Iterations` column. Combined with the circuit breaker, this gives visibility into which tasks are churning and where the agent is spending tokens.
+
+14. **Knowledge accumulation** — The plan agent seeds initial learnings from codebase research into `PROGRESS.md`. The orchestrator passes these learnings (plus runtime discoveries from previous coders) to every subsequent coder dispatch, so knowledge compounds across the implementation loop rather than being lost between subagent calls.
 
 ## Comparison with Other Ralph Implementations
 
@@ -275,7 +285,7 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 | **Role separation** | Single agent writes code and manages state | Single agent does everything | Strict — orchestrator never writes code; Coder subagent never chooses which task to skip; inspectors never implement fixes |
 | **Task selection** | Agent picks highest-priority `passes: false` story | Agent decides what to work on | Coder subagent autonomously selects (orchestrator forbidden from recommending) |
 | **Commit strategy** | One commit per story | Up to the agent | `git commit --amend` for rework iterations; conventional commits for new tasks |
-| **Knowledge transfer** | `progress.txt` Codebase Patterns section + per-directory `AGENTS.md` updates | File changes persist in session | `## Learnings` section in `PROGRESS.md` passed to subsequent coder iterations |
+| **Knowledge transfer** | `progress.txt` Codebase Patterns section + per-directory `AGENTS.md` updates | File changes persist in session | `00-context.md` shared context file (plan-seeded) + `## Learnings` section in `PROGRESS.md` passed to subsequent coder iterations |
 | **Archiving** | Automatic — archives to `archive/YYYY-MM-DD-feature/` when branch changes | Not built in | Manual via `/ralph-archive` command or **Archive Feature** handoff; stale-feature warnings in plan agent |
 
 ### Trade-offs
