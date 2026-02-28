@@ -64,7 +64,8 @@ your-project/
 │   │       ├── coder.md
 │   │       ├── task-inspector.md
 │   │       ├── phase-inspector.md
-│   │       └── journey-verifier.md
+│   │       ├── journey-verifier.md
+│   │       └── chrome-devtools-skill.md  # Browser verification skill reference
 │   ├── copilot-instructions.md      # ← customize this (project config + preflight)
 │   └── prompts/                     # Slash commands (/forge-prd, /forge-plan, /forge-archive)
 │       ├── forge-prd.prompt.md
@@ -210,6 +211,7 @@ The plan agent seeds initial learnings from its codebase research into the `## L
 
 - VS Code with GitHub Copilot (agent mode)
 - Custom agents support (VS Code 1.106+)
+- **Optional**: `chrome-devtools` MCP server for runtime browser verification in the Journey Verifier (UI/Frontend projects only). Without it, the Journey Verifier falls back to static-only reachability analysis. See [Chrome DevTools MCP Setup](#chrome-devtools-mcp-setup-optional).
 
 ## Key Enhancements
 
@@ -217,7 +219,7 @@ The plan agent seeds initial learnings from its codebase research into the `## L
 
 2. **Phased execution with enforced boundaries** — Instead of a flat story list, work is organized into phases with exit criteria. Phase Inspector validates cross-task integration at each boundary before proceeding, catching issues that per-task checks miss.
 
-3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. Tiers 2–4 are static code analysis (reading source files to trace routes, exports, and registrations) rather than runtime verification. This addresses the common AI-agent failure mode of building features that pass unit tests but aren't wired into the application, though it cannot catch runtime errors that snarktank/ralph's `dev-browser` skill would.
+3. **Four-tier QA pipeline** — Adds Task Inspector (per-task review), Phase Inspector (per-phase integration review), and Journey Verifier (final end-to-end reachability audit) on top of the standard preflight checks. Tiers 2–3 are static code analysis (reading source files to trace routes, exports, and registrations). Tier 4 (Journey Verifier) combines static reachability analysis with **runtime browser verification** via the `chrome-devtools` MCP server for UI/Frontend projects — navigating pages, checking for console errors, verifying DOM structure, and capturing screenshots. This addresses the common AI-agent failure mode of building features that pass unit tests but aren’t wired into the application or fail at runtime.
 
 4. **Structured planning stage** — The plan agent produces a technical specification, phased implementation plan, and individual task files with file-level guidance. snarktank/ralph converts PRDs to a flat JSON story list with dependency-aware priority ordering. ralph-wiggum has no planning stage by design — it delegates task structure entirely to the user's prompt, trading planning overhead for simplicity.
 
@@ -271,9 +273,9 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 |---|---|---|---|
 | **QA tiers** | 1 (coding agent runs quality checks) | 1 (self-correction via tests/linters) | 4 (Coder preflight → Task Inspector → Phase Inspector → Journey Verifier) |
 | **Dedicated inspector** | No — same agent implements and verifies | No — same agent self-corrects | Yes — separate Task Inspector and Phase Inspector subagents review each task and phase independently |
-| **Reachability audits** | Runtime browser verification via `dev-browser` skill (UI only) | Not built in | Static code analysis verifying features are wired into entry points (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries) — does not start the application or verify at runtime |
+| **Reachability audits** | Runtime browser verification via `dev-browser` skill (UI only) | Not built in | Static code analysis verifying features are wired into entry points (routes for UI, endpoint registration for APIs, command registration for CLIs, public exports for libraries) + **runtime browser verification** via `chrome-devtools` MCP for UI/Frontend projects (navigates pages, checks console errors, verifies DOM, captures screenshots). Falls back to static-only if MCP is unavailable |
 | **Circuit breaker** | Max iterations on the bash loop (default: 10) | `--max-iterations` flag (default: unlimited) | Auto-pause (`PAUSE.md`) after 3 consecutive inspection failures on the same task |
-| **Browser verification** | `dev-browser` skill for runtime visual UI checks (loads pages, interacts with UI, takes screenshots) | Not built in | Static reachability analysis only; runtime browser tooling is a [backlog item](TODO.md) |
+| **Browser verification** | `dev-browser` skill for runtime visual UI checks (loads pages, interacts with UI, takes screenshots) | Not built in | Runtime browser verification via `chrome-devtools` MCP server — navigates routes, checks for JS console errors, verifies DOM structure via accessibility snapshots, and captures screenshots. Requires MCP server configuration; gracefully degrades to static-only reachability analysis if unavailable |
 
 ### Orchestration & Control
 
@@ -292,9 +294,69 @@ This project was originally inspired by the Ralph pattern ([Geoffrey Huntley](ht
 
 - **Token usage** — The multi-agent approach with 4 QA tiers consumes roughly 4–6x more tokens per feature than snarktank/ralph and ~20x more than ralph-wiggum. Each task requires at minimum 2 subagent calls (coder + task inspector), with additional phase inspector calls at boundaries and a journey verifier call at the end. Subagent instruction files are re-read from disk every iteration, further increasing per-iteration cost.
 - **No fresh context** — snarktank/ralph's fresh-instance-per-iteration model avoids context window exhaustion on large projects. Amp's auto-handoff feature (`autoHandoff` at 90% context) further mitigates this. Forge runs within a single Copilot session, which can hit context limits on long runs.
-- **No runtime browser verification** — snarktank/ralph includes a `dev-browser` skill that actually loads pages and interacts with UI at runtime. Forge's reachability audits are static code analysis only — they trace routes and exports by reading source files but never start the application. This means Forge can miss runtime errors, broken pages, or import cycles that snarktank/ralph would catch. Concrete browser tooling is a [backlog item](TODO.md).
+- **Runtime browser verification requires MCP setup** — Forge’s Journey Verifier can perform runtime browser checks (navigating pages, inspecting console errors, verifying DOM structure) via the `chrome-devtools` MCP server, but this requires the MCP server to be configured and running. Without it, the Journey Verifier falls back to static-only reachability analysis. snarktank/ralph’s `dev-browser` skill works out of the box for Amp/Claude Code users. See the [Chrome DevTools MCP Setup](#chrome-devtools-mcp-setup-optional) section for configuration instructions.
 - **Manual archiving** — snarktank/ralph auto-archives to `archive/YYYY-MM-DD-feature/` whenever the branch changes. Forge requires the user to explicitly run `/forge-archive` or use the **Archive Feature** handoff — but the plan agent warns about stale completed features to prompt archiving.
 - **Platform lock-in** — snarktank/ralph works with Amp and Claude Code (including marketplace plugin support); ralph-wiggum works with Claude Code. Forge requires VS Code with GitHub Copilot agent mode.
+
+## Chrome DevTools MCP Setup (Optional)
+
+The Journey Verifier can perform **runtime browser verification** for UI/Frontend projects using the `chrome-devtools` MCP server. This is optional — without it, the Journey Verifier falls back to static-only reachability analysis.
+
+### What it enables
+
+When configured, the Journey Verifier will:
+- Navigate to each route identified during static analysis in a real browser
+- Check for JavaScript console errors (runtime crashes, failed imports, missing data)
+- Verify DOM structure via accessibility snapshots (expected elements present)
+- Capture screenshots as verification artifacts
+- Inspect network requests for failed API calls
+
+This closes the gap with snarktank/ralph's `dev-browser` skill — catching runtime errors that static code analysis cannot detect.
+
+### Configuration
+
+Add the `chrome-devtools` MCP server to your VS Code settings (`.vscode/settings.json` or User Settings):
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "chrome-devtools": {
+        "command": "npx",
+        "args": ["-y", "@anthropic-ai/chrome-devtools-mcp@latest"]
+      }
+    }
+  }
+}
+```
+
+Alternatively, add it to a `.vscode/mcp.json` file in your project:
+
+```json
+{
+  "servers": {
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/chrome-devtools-mcp@latest"]
+    }
+  }
+}
+```
+
+### Requirements
+
+- **Node.js** must be installed (for `npx`)
+- **Google Chrome** or **Chromium** must be installed on the system
+- The MCP server launches a headless Chrome instance automatically
+
+### Verification
+
+After configuring, you can verify the MCP server is working by:
+1. Opening the VS Code Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Running **"MCP: List Servers"** — `chrome-devtools` should appear and show as running
+3. The Journey Verifier will automatically detect and use it when dispatched
+
+If the MCP server is not configured or not running, the Journey Verifier will log a note in its report and proceed with static-only verification — no action needed.
 
 ## Acknowledgements
 

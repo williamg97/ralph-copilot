@@ -158,6 +158,7 @@ always read the file fresh each time you dispatch.
 | Task Inspector | `.github/agents/instructions/task-inspector.md` |
 | Phase Inspector | `.github/agents/instructions/phase-inspector.md` |
 | Journey Verifier | `.github/agents/instructions/journey-verifier.md` |
+| Chrome DevTools Skill | `.github/agents/instructions/chrome-devtools-skill.md` (reference file — read and included in Journey Verifier dispatch) |
 
 ## Your loop
 
@@ -351,10 +352,16 @@ When `PROGRESS.md` shows all tasks across all phases as ✅ Completed:
 as its prompt, including the PRD folder path and an explicit statement:
 "You are fully autonomous. Do not ask the user any questions."
 
+**Additionally**, read `.github/agents/instructions/chrome-devtools-skill.md` and include its
+contents in the dispatch prompt. This provides the Journey Verifier with the Chrome DevTools
+MCP tool reference for runtime browser verification. The Journey Verifier will use it for
+UI/Frontend and Hybrid projects if the `chrome-devtools` MCP server is available, and will
+gracefully fall back to static-only verification if it is not.
+
 - If the Journey Verifier returns **PASS**: proceed to Step 9 (exit).
 - If the Journey Verifier returns **FAIL**: it will have marked tasks as 🔴 Incomplete with
-  specific wiring instructions. Loop back to Step 3 and continue the loop — the Coder will
-  pick up the newly-incomplete tasks and fix the wiring.
+  specific wiring or runtime-failure instructions. Loop back to Step 3 and continue the loop —
+  the Coder will pick up the newly-incomplete tasks and fix the issues.
 
 This step exists because it is common for AI coding agents to build every feature correctly
 at the unit level but fail to wire them into the application's entry points. The Journey
@@ -567,10 +574,13 @@ Forge includes a **four-tier** quality assurance system to prevent incomplete or
 ### Tier 4: Consumer Journey Verification (Final Gate)
 - Triggered once ALL tasks across ALL phases are ✅ Completed
 - Skipped in Light Mode (≤ 3 tasks)
-- Traces every user story from the PRD to its consumer-facing entry point
+- **Static analysis**: Traces every user story from the PRD to its consumer-facing entry point
 - Project-type aware: UI routes, API endpoint registration, CLI command registration, library exports
+- **Runtime browser verification** (UI/Frontend and Hybrid projects only): Uses `chrome-devtools` MCP to navigate to each route, check for console errors, verify DOM structure, and capture screenshots
+  - Requires the `chrome-devtools` MCP server to be configured — gracefully degrades to static-only if unavailable
+  - Catches runtime errors, broken pages, and import cycles that static analysis misses
 - Returns PASS or FAIL
-- If FAIL: marks tasks as 🔴 Incomplete with specific wiring instructions — loop continues
+- If FAIL: marks tasks as 🔴 Incomplete with specific wiring or runtime-failure instructions — loop continues
 - If PASS: Forge loop can exit successfully
 - Prevents the common failure mode of "everything built but nothing reachable"
 
